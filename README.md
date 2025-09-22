@@ -1,6 +1,6 @@
 # Pipelet OCPP SDK
 
-[![CI](https://img.shields.io/github/actions/workflow/status/pipelet/Pipelet-OCPP-SDK/ci.yml?branch=main&label=CI)](https://github.com/pipelet/Pipelet-OCPP-SDK/actions/workflows/ci.yml)
+[![CI](https://github.com/munichseb/Pipelet-OCPP-SDK/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/munichseb/Pipelet-OCPP-SDK/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A batteries-included developer stack for orchestrating **Pipelet** workflows reacting to OCPP events. The repository bundles a
