@@ -1,17 +1,18 @@
 """API endpoints for exporting and importing configuration snapshots."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from http import HTTPStatus
-from typing import Any, Iterable
+from typing import Any
 
 from flask import Blueprint, jsonify, request
 
 from ..extensions import db
 from ..models.pipelet import Pipelet
 from ..models.workflow import Workflow
+from ..utils.auth import require_token
 from .pipelets import _validate_pipelet_payload
 from .workflow import _normalize_event, _normalize_graph
-from ..utils.auth import require_token
 
 bp = Blueprint("export", __name__)
 
