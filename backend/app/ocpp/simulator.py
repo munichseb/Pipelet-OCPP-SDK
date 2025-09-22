@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import asyncio
 import threading
+from collections.abc import Awaitable
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Awaitable, TypeVar
+from typing import TypeVar
 
 import websockets
 from flask import Flask

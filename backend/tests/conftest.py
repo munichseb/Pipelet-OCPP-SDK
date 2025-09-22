@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import pathlib
 import secrets
 import sys
 from collections.abc import Callable
-from typing import Dict
 
 import pytest
 from sqlalchemy.pool import StaticPool
@@ -56,7 +57,7 @@ def auth_header_factory(app):
 
     created_tokens: list[ApiToken] = []
 
-    def factory(role: str = "admin", name: str | None = None) -> Dict[str, str]:
+    def factory(role: str = "admin", name: str | None = None) -> dict[str, str]:
         token_value = secrets.token_urlsafe(16)
         token = ApiToken(
             name=name or f"Test {role.title()} Token",
@@ -86,10 +87,10 @@ def cleanup_tokens(app):
 
 
 @pytest.fixture()
-def admin_headers(auth_header_factory: Callable[..., Dict[str, str]]):
+def admin_headers(auth_header_factory: Callable[..., dict[str, str]]):
     return auth_header_factory(role="admin")
 
 
 @pytest.fixture()
-def readonly_headers(auth_header_factory: Callable[..., Dict[str, str]]):
+def readonly_headers(auth_header_factory: Callable[..., dict[str, str]]):
     return auth_header_factory(role="readonly")

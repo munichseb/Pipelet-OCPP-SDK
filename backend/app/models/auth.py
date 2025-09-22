@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from ..extensions import db
 
@@ -16,7 +16,7 @@ class ApiToken(db.Model):
     name = db.Column(db.String(120), nullable=False)
     token_hash = db.Column(db.String(64), unique=True, nullable=False)
     role = db.Column(db.String(20), nullable=False, default="readonly")
-    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
     revoked_at = db.Column(db.DateTime, nullable=True)
 
     def is_active(self) -> bool:

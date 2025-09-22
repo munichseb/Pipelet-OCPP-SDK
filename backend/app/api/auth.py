@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from http import HTTPStatus
 
 from flask import Blueprint, jsonify, request
@@ -59,6 +59,6 @@ def list_tokens() -> tuple[object, int]:
 def revoke_token(token_id: int) -> tuple[object, int]:
     token = ApiToken.query.get_or_404(token_id)
     if token.revoked_at is None:
-        token.revoked_at = datetime.now(timezone.utc)
+        token.revoked_at = datetime.now(UTC)
         db.session.commit()
     return "", HTTPStatus.NO_CONTENT

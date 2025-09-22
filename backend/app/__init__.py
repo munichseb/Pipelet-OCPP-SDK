@@ -28,12 +28,12 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     limiter.init_app(app)
 
+    from .api.auth import bp as auth_bp
+    from .api.export import bp as export_bp
     from .api.health import bp as health_bp
     from .api.logs import bp as logs_bp
-    from .api.export import bp as export_bp
     from .api.pipelets import bp as pipelets_bp
     from .api.workflow import bp as workflow_bp
-    from .api.auth import bp as auth_bp
 
     sim_bp = None
     if app.config.get("ENABLE_SIM_API", True):

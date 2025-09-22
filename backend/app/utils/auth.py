@@ -6,8 +6,9 @@ import functools
 import hashlib
 import hmac
 import secrets
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from flask import g, jsonify, request
 

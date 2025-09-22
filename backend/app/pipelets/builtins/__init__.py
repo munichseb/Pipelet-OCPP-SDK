@@ -1,16 +1,11 @@
 """Collection of built-in pipelet templates provided by the platform."""
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, List
 
 from . import filter as builtin_filter
-from . import http_webhook
-from . import logger
-from . import mqtt_publish
-from . import router
-from . import template
-from . import transformer
+from . import http_webhook, logger, mqtt_publish, router, template, transformer
 
 
 @dataclass(frozen=True)
@@ -30,7 +25,7 @@ def _normalize(code: str) -> str:
     return f"{stripped}\n"
 
 
-_BUILTINS: List[BuiltinPipelet] = [
+_BUILTINS: list[BuiltinPipelet] = [
     BuiltinPipelet(
         name=template.DEFAULT_NAME,
         event=template.DEFAULT_EVENT,
@@ -44,10 +39,10 @@ _BUILTINS: List[BuiltinPipelet] = [
         description=transformer.DESCRIPTION,
     ),
     BuiltinPipelet(
-        name=filter.DEFAULT_NAME,
-        event=filter.DEFAULT_EVENT,
-        code=_normalize(filter.CODE),
-        description=filter.DESCRIPTION,
+        name=builtin_filter.DEFAULT_NAME,
+        event=builtin_filter.DEFAULT_EVENT,
+        code=_normalize(builtin_filter.CODE),
+        description=builtin_filter.DESCRIPTION,
     ),
     BuiltinPipelet(
         name=router.DEFAULT_NAME,

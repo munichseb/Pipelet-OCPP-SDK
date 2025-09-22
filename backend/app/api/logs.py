@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Iterable
 from http import HTTPStatus
-from typing import Iterable
 
 from flask import Blueprint, Response, jsonify, request, stream_with_context
 
-from ..models.logs import RunLog
 from ..extensions import limiter
+from ..models.logs import RunLog
 from ..utils.auth import require_token
 
 bp = Blueprint("logs", __name__)

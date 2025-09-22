@@ -17,8 +17,8 @@ from ocpp.v16.enums import Action, AuthorizationStatus, RegistrationStatus
 from websockets.exceptions import ConnectionClosed
 from websockets.server import WebSocketServerProtocol
 
-from .logging import persist_run_log
 from ..workflow.runner import run_workflow_for_event
+from .logging import persist_run_log
 
 OCPP_SUBPROTOCOL = "ocpp1.6"
 
