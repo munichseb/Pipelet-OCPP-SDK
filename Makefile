@@ -16,8 +16,8 @@ seed: ## Beispiel-Daten
 
 export: ## Export JSON
 	@if [ -z "$$TOKEN" ]; then echo "Set TOKEN env var with a valid Bearer token"; exit 1; fi
-	curl -H "Authorization: Bearer $$TOKEN" http://localhost:5000/api/export -o export.json
+	curl -H "Authorization: Bearer $$TOKEN" http://localhost:9200/api/export -o export.json
 
 import: ## Import JSON
 	@if [ -z "$$TOKEN" ]; then echo "Set TOKEN env var with a valid Bearer token"; exit 1; fi
-	curl -H "Authorization: Bearer $$TOKEN" -X POST -H "Content-Type: application/json" --data @export.json http://localhost:5000/api/import
+	curl -H "Authorization: Bearer $$TOKEN" -X POST -H "Content-Type: application/json" --data @export.json http://localhost:9200/api/import

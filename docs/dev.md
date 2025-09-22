@@ -10,5 +10,5 @@
    ```
 3. Healthcheck aufrufen:
    ```bash
-   curl http://localhost:5000/api/health
+   curl http://localhost:9200/api/health
    ```

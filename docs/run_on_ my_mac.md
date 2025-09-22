@@ -4,7 +4,7 @@ Hier ist eine kurze, pragmatische Test-Checkliste (Docker-Variante zuerst, dann 
 
 Voraussetzungen
 
-Docker Desktop für macOS (Ports 5000, 5173, 9000, 3306 frei).
+Docker Desktop für macOS (Ports 9200, 5173, 9000, 3306 frei).
 
 Repository klonen & .env setzen
 
@@ -20,7 +20,7 @@ docker compose up --build
 
 Danach sollten Backend & Frontend unter diesen URLs erreichbar sein (stehen auch im README):
 
-Backend API: http://localhost:5000
+Backend API: http://localhost:9200
 
 Frontend (Workflow-Canvas + Simulator): http://localhost:5173
  
@@ -39,7 +39,7 @@ Smoke-Tests
 
 Healthcheck:
 
-curl http://localhost:5000/api/health
+curl http://localhost:9200/api/health
 
 
 Erwartet: {"status":"ok"}.
@@ -71,13 +71,13 @@ Export/Import ausprobieren (optional)
 
 Export:
 
-curl http://localhost:5000/api/export -o export.json
+curl http://localhost:9200/api/export -o export.json
 
 
 Import (z.B. in frischer DB):
 
 curl -X POST -H "Content-Type: application/json" \
-     --data @export.json "http://localhost:5000/api/import?overwrite=true"
+     --data @export.json "http://localhost:9200/api/import?overwrite=true"
 
 
 Struktur steht im README.

@@ -3,7 +3,7 @@ Test the complete flow on a mac:
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE="http://localhost:5000"
+BASE="http://localhost:9200"
 
 echo "1) Healthcheck..."
 curl -s $BASE/api/health | jq .
