@@ -19,12 +19,17 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     from .api.health import bp as health_bp
     from .api.logs import bp as logs_bp
-    from .api.sim import bp as sim_bp
-    from .ocpp.server import ensure_server_started
+    from .api.pipelets import bp as pipelets_bp
+
+    sim_bp = None
+    if app.config.get("ENABLE_SIM_API", True):
+        from .api.sim import bp as sim_bp
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(logs_bp, url_prefix="/api")
-    app.register_blueprint(sim_bp, url_prefix="/api")
+    if sim_bp is not None:
+        app.register_blueprint(sim_bp, url_prefix="/api")
+    app.register_blueprint(pipelets_bp, url_prefix="/api")
 
     with app.app_context():
         # Import models to ensure they are registered with SQLAlchemy before creating tables.
@@ -32,7 +37,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
         db.create_all()
 
-    ensure_server_started(app)
+    if app.config.get("ENABLE_OCPP_SERVER", True):
+        from .ocpp.server import ensure_server_started
+
+        ensure_server_started(app)
 
     return app
 
