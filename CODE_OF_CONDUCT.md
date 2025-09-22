@@ -1,6 +1,6 @@
 # Code of Conduct
 
-## Our pledge
+## Our goal
 
 We as members, contributors, and leaders pledge to make participation in the Pipelet OCPP SDK community a harassment-free
 experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender
