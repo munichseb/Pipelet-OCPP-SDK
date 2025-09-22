@@ -92,6 +92,12 @@ button:disabled {
   opacity: 0.5;
 }
 
+input[type='text'],
+input[type='number'],
+select {
+  font-family: inherit;
+}
+
 .app-main {
   flex: 1;
   display: grid;
@@ -191,6 +197,315 @@ button:disabled {
   color: #7f1d1d;
 }
 
+.status-bars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 1rem 2rem;
+  background: #e2e8f0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.status-bar {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.status-bar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-indicator--online {
+  background: rgba(134, 239, 172, 0.3);
+  color: #166534;
+}
+
+.status-indicator--offline {
+  background: rgba(248, 113, 113, 0.3);
+  color: #7f1d1d;
+}
+
+.status-bar__meta {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.status-bar__timestamp {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.app-panels {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1px;
+  background: #cbd5f5;
+}
+
+.app-panels__simulator {
+  background: #f8fafc;
+  padding: 1.5rem;
+}
+
+.app-panels__logs {
+  background: #ffffff;
+  padding: 1.5rem;
+  display: flex;
+}
+
+.simulator-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.simulator-panel__header h2 {
+  margin: 0 0 0.35rem;
+}
+
+.simulator-panel__header p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.simulator-panel__form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.simulator-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.simulator-panel__field input {
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.simulator-panel__actions {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.simulator-panel__state {
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.simulator-panel__state dt {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.simulator-panel__state dd {
+  margin: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.log-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.log-viewer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.log-viewer__header h2 {
+  margin: 0;
+}
+
+.log-viewer__stream {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.log-viewer__stream--connecting {
+  color: #f97316;
+}
+
+.log-viewer__stream--open {
+  color: #16a34a;
+}
+
+.log-viewer__stream--error {
+  color: #dc2626;
+}
+
+.log-viewer__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.log-viewer__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #475569;
+  min-width: 140px;
+}
+
+.log-viewer__field select,
+.log-viewer__field input[type='text'],
+.log-viewer__field input[type='number'] {
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.log-viewer__field--search {
+  flex: 1;
+  min-width: 180px;
+}
+
+.log-viewer__toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.log-viewer__entries {
+  flex: 1;
+  min-height: 260px;
+  background: #0f172a;
+  color: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', ui-monospace, monospace;
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.25);
+}
+
+.log-viewer__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  margin-bottom: 0.75rem;
+}
+
+.log-viewer__entry:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.log-viewer__entry header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+}
+
+.log-viewer__entry time {
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.log-viewer__entry p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-viewer__badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.log-viewer__badge--cs {
+  background: rgba(14, 165, 233, 0.25);
+  color: #7dd3fc;
+}
+
+.log-viewer__badge--cp {
+  background: rgba(124, 58, 237, 0.25);
+  color: #c4b5fd;
+}
+
+.log-viewer__badge--pipelet {
+  background: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+}
+
+.log-viewer__highlight {
+  background: rgba(248, 113, 113, 0.4);
+  color: #ffffff;
+  padding: 0 0.2rem;
+  border-radius: 0.3rem;
+}
+
+.log-viewer__empty {
+  margin: 0;
+  text-align: center;
+  padding: 2rem 0;
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.log-viewer__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.log-viewer__actions button {
+  min-width: 120px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -209,5 +524,18 @@ button:disabled {
 
   .palette-column {
     border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  }
+
+  .status-bars {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .app-panels {
+    grid-template-columns: 1fr;
+  }
+
+  .app-panels__logs {
+    padding-top: 0;
   }
 }

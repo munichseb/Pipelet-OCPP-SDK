@@ -10,6 +10,9 @@ import {
   type WorkflowSummary,
 } from './api'
 import { PipeletPalette } from './components/PipeletPalette'
+import { LogViewer } from './components/LogViewer'
+import { SimulatorPanel } from './components/SimulatorPanel'
+import { StatusBars } from './components/StatusBars'
 import {
   WorkflowCanvas,
   type WorkflowCanvasHandle,
@@ -29,6 +32,8 @@ function App(): JSX.Element {
   const [isDirty, setIsDirty] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState<StatusMessage | null>(null)
+  const [cpId, setCpId] = useState('CP_1')
+  const [statusRevision, setStatusRevision] = useState(0)
 
   useEffect(() => {
     listWorkflows()
@@ -51,6 +56,10 @@ function App(): JSX.Element {
   const reportError = (message: string, error: unknown): void => {
     console.error(message, error)
     setStatus({ type: 'error', text: message })
+  }
+
+  const handleSimulatorActionComplete = (): void => {
+    setStatusRevision((previous) => previous + 1)
   }
 
   const handleAddPipelet = async (pipelet: PipeletSummary): Promise<void> => {
@@ -199,6 +208,7 @@ function App(): JSX.Element {
           </div>
         )}
       </header>
+      <StatusBars cpId={cpId} refreshToken={statusRevision} />
       <main className="app-main">
         <aside className="palette-column">
           <h2 className="section-title">Pipelets</h2>
@@ -208,6 +218,18 @@ function App(): JSX.Element {
           <WorkflowCanvas ref={canvasRef} onChange={handleCanvasChange} />
         </section>
       </main>
+      <section className="app-panels">
+        <aside className="app-panels__simulator">
+          <SimulatorPanel
+            cpId={cpId}
+            onCpIdChange={setCpId}
+            onActionComplete={handleSimulatorActionComplete}
+          />
+        </aside>
+        <div className="app-panels__logs">
+          <LogViewer />
+        </div>
+      </section>
     </div>
   )
 }

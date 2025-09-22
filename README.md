@@ -69,6 +69,20 @@ docker compose up --build
 This exposes the backend under [http://localhost:5000](http://localhost:5000) and the workflow canvas frontend under
 [http://localhost:5173](http://localhost:5173).
 
+## Simulator dashboard & live logs
+
+The frontend includes a simulator dashboard that bundles charge point controls, connection status indicators and the
+streaming log console:
+
+1. The **Charge Point Simulator** panel lets you choose a custom CP-ID (defaults to `CP_1`), trigger connect/disconnect,
+   send RFID tokens and start/stop transactions or periodic heartbeats. All interactions call the matching REST endpoints
+   under `/api/sim/*`.
+2. The status bars display the connectivity of the central system (WebSocket listener on `:9000`) and the currently
+   selected charge point. They refresh every few seconds and show the timestamp of the latest event.
+3. The live log viewer subscribes to the server-sent events stream, supports source filters, full-text search with
+   highlighting, auto-scroll toggles and a "Nur letzte N" cap. Use the *Clear* button to reset the local view or
+   *Download* to fetch an NDJSON snapshot via `/api/logs/download`.
+
 ## Continuous Integration
 
 GitHub Actions runs linting (Ruff) and the pytest suite on every push and pull request to ensure code quality.
