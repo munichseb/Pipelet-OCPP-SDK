@@ -32,5 +32,16 @@ services:
       - "9000:9000"   # OCPP WS (später genutzt)
     command: ["python", "wsgi.py"]
 
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    environment:
+      - VITE_API_BASE=http://localhost:5000
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+
 volumes:
   db_data:
