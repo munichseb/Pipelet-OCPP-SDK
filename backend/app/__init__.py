@@ -1,13 +1,10 @@
 """Application factory for the Pipelet OCPP backend."""
+from __future__ import annotations
 
 from flask import Flask
 
-from .api.health import bp as health_bp
-from .api.logs import bp as logs_bp
-from .api.sim import bp as sim_bp
 from .config import Config
 from .extensions import cors, db
-from .ocpp.server import ensure_server_started
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -19,6 +16,11 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     if cors is not None:
         cors.init_app(app)
+
+    from .api.health import bp as health_bp
+    from .api.logs import bp as logs_bp
+    from .api.sim import bp as sim_bp
+    from .ocpp.server import ensure_server_started
 
     app.register_blueprint(health_bp, url_prefix="/api")
     app.register_blueprint(logs_bp, url_prefix="/api")
@@ -33,3 +35,4 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     ensure_server_started(app)
 
     return app
+
