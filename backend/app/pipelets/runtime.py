@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 import tempfile
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 from backend.app.utils import security
 
@@ -19,7 +19,7 @@ _PIPELET_WRAPPER_TEMPLATE = """import json, sys\n""" \
     "print(json.dumps({\"result\": out}))\n"
 
 
-ResultType = Tuple[Any, str, Optional[Dict[str, Any]]]
+ResultType = tuple[Any, str, dict[str, Any] | None]
 
 
 def _build_wrapper_source(code: str) -> str:
@@ -36,7 +36,7 @@ def _write_wrapper_file(code: str) -> str:
         return tmp_file.name
 
 
-def _collect_error(debug: str, default_type: str = "Exception") -> Dict[str, str]:
+def _collect_error(debug: str, default_type: str = "Exception") -> dict[str, str]:
     error_type = "SyntaxError" if "SyntaxError" in debug else default_type
     message = "Pipelet execution failed"
     if debug:
@@ -48,8 +48,8 @@ def _collect_error(debug: str, default_type: str = "Exception") -> Dict[str, str
 
 def run_pipelet(
     code: str,
-    message: Dict[str, Any],
-    context: Optional[Dict[str, Any]],
+    message: dict[str, Any],
+    context: dict[str, Any] | None,
     timeout: float = 1.5,
 ) -> ResultType:
     """Execute a pipelet definition in an isolated subprocess."""

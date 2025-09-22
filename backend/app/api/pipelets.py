@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from http import HTTPStatus
-from typing import Any, Dict
+from typing import Any
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
@@ -17,7 +17,7 @@ from ..pipelets.runtime import run_pipelet
 bp = Blueprint("pipelets", __name__)
 
 
-def _pipelet_to_dict(pipelet: Pipelet) -> Dict[str, Any]:
+def _pipelet_to_dict(pipelet: Pipelet) -> dict[str, Any]:
     """Serialize a pipelet model to a JSON compatible dictionary."""
 
     return {
@@ -30,7 +30,7 @@ def _pipelet_to_dict(pipelet: Pipelet) -> Dict[str, Any]:
     }
 
 
-def _validate_pipelet_payload(payload: Dict[str, Any]) -> tuple[Dict[str, Any], list[str]]:
+def _validate_pipelet_payload(payload: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
     """Validate and normalize incoming pipelet payloads."""
 
     errors: list[str] = []
@@ -146,7 +146,7 @@ def test_pipelet(pipelet_id: int) -> tuple[object, int]:
 
     result, debug, error = run_pipelet(pipelet.code, message, context, timeout=timeout)
 
-    log_payload: Dict[str, Any] = {
+    log_payload: dict[str, Any] = {
         "pipelet": pipelet.name,
         "event": pipelet.event,
         "debug": debug,
@@ -156,7 +156,7 @@ def test_pipelet(pipelet_id: int) -> tuple[object, int]:
     db.session.add(run_log)
     db.session.commit()
 
-    response: Dict[str, Any] = {
+    response: dict[str, Any] = {
         "result": result,
         "debug": debug,
         "error": error,

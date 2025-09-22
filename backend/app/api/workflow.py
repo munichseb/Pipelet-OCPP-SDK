@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from http import HTTPStatus
-from typing import Any, Dict
+from typing import Any
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
@@ -17,7 +17,7 @@ bp = Blueprint("workflows", __name__)
 MAX_GRAPH_BYTES = 500_000
 
 
-def _serialize_workflow(workflow: Workflow) -> Dict[str, Any]:
+def _serialize_workflow(workflow: Workflow) -> dict[str, Any]:
     """Return a JSON serialisable representation of a workflow."""
 
     try:

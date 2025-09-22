@@ -5,7 +5,14 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backend.app.pipelets.runtime import run_pipelet
+
+def _get_run_pipelet():
+    from backend.app.pipelets.runtime import run_pipelet as _run_pipelet
+
+    return _run_pipelet
+
+
+run_pipelet = _get_run_pipelet()
 
 
 def test_success_return_value():
