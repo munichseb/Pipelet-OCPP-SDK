@@ -9,7 +9,7 @@ services:
     command: ["--default-authentication-plugin=mysql_native_password"]
     ports: ["3306:3306"]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 10
