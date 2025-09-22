@@ -8,7 +8,7 @@ import sys
 import tempfile
 from typing import Any
 
-from backend.app.utils import security
+from ..utils import security
 
 _PIPELET_WRAPPER_TEMPLATE = """import json, sys\n""" \
     "inp = json.loads(sys.stdin.read() or \"{}\")\n" \
