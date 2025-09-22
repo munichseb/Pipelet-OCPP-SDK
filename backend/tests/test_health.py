@@ -10,6 +10,8 @@ class TestConfig(Config):
 
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    ENABLE_OCPP_SERVER = False
+    ENABLE_SIM_API = False
 
 
 def create_test_app():

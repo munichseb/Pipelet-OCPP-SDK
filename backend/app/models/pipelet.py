@@ -6,6 +6,14 @@ from datetime import datetime
 
 from ..extensions import db
 
+ALLOWED_EVENTS = [
+    "BootNotification",
+    "Heartbeat",
+    "Authorize",
+    "StartTransaction",
+    "StopTransaction",
+]
+
 
 class Pipelet(db.Model):
     """Represents a Pipelet definition."""
