@@ -1,6 +1,6 @@
 Hier ist eine kurze, pragmatische Test-Checkliste (Docker-Variante zuerst, dann „native“ Dev-Variante) um die Lösung auf einem Mac lokal laufen zu lassen:
 
-Schnellstart (mit Docker)
+# Quickstart
 
 Voraussetzungen
 
