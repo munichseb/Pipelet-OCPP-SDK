@@ -6,3 +6,6 @@ pytest
 pytest-cov
 ruff
 black
+ocpp
+websockets
+asyncio
