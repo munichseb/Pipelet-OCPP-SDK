@@ -17,6 +17,15 @@ bp = Blueprint("workflows", __name__)
 MAX_GRAPH_BYTES = 500_000
 
 
+ALLOWED_EVENTS = {
+    "BootNotification",
+    "Heartbeat",
+    "Authorize",
+    "StartTransaction",
+    "StopTransaction",
+}
+
+
 def _serialize_workflow(workflow: Workflow) -> dict[str, Any]:
     """Return a JSON serialisable representation of a workflow."""
 
@@ -24,7 +33,12 @@ def _serialize_workflow(workflow: Workflow) -> dict[str, Any]:
         graph = json.loads(workflow.graph_json)
     except (TypeError, ValueError):
         graph = {}
-    return {"id": workflow.id, "name": workflow.name, "graph_json": graph}
+    return {
+        "id": workflow.id,
+        "name": workflow.name,
+        "graph_json": graph,
+        "event": workflow.event,
+    }
 
 
 def _normalize_graph(value: Any, *, allow_default: bool = False) -> tuple[str, list[str]]:
@@ -65,6 +79,25 @@ def _is_name_unique(name: str, workflow_id: int | None = None) -> bool:
     return not db.session.query(query.exists()).scalar()
 
 
+def _normalize_event(value: Any) -> tuple[str | None, list[str]]:
+    """Validate the event payload for workflow bindings."""
+
+    if value is None:
+        return None, []
+
+    if not isinstance(value, str):
+        return None, ["event muss ein String oder null sein"]
+
+    candidate = value.strip()
+    if not candidate:
+        return None, ["event darf nicht leer sein"]
+
+    if candidate not in ALLOWED_EVENTS:
+        return None, ["event ist ungültig"]
+
+    return candidate, []
+
+
 @bp.post("/workflows")
 def create_workflow() -> tuple[object, int]:
     payload = request.get_json(silent=True, force=True) or {}
@@ -90,7 +123,10 @@ def create_workflow() -> tuple[object, int]:
 @bp.get("/workflows")
 def list_workflows() -> tuple[object, int]:
     workflows = Workflow.query.order_by(Workflow.created_at.desc()).all()
-    return jsonify([{"id": wf.id, "name": wf.name} for wf in workflows]), HTTPStatus.OK
+    return (
+        jsonify([{"id": wf.id, "name": wf.name, "event": wf.event} for wf in workflows]),
+        HTTPStatus.OK,
+    )
 
 
 @bp.get("/workflows/<int:workflow_id>")
@@ -121,3 +157,45 @@ def update_workflow(workflow_id: int) -> tuple[object, int]:
     db.session.commit()
 
     return jsonify(_serialize_workflow(workflow)), HTTPStatus.OK
+
+
+@bp.put("/workflows/<int:workflow_id>/event")
+def update_workflow_event(workflow_id: int) -> tuple[object, int]:
+    workflow = Workflow.query.get_or_404(workflow_id)
+    payload = request.get_json(silent=True, force=True) or {}
+
+    desired_event, errors = _normalize_event(payload.get("event"))
+    if errors:
+        return jsonify({"errors": errors}), HTTPStatus.BAD_REQUEST
+
+    if desired_event is not None:
+        conflict = (
+            Workflow.query.filter(Workflow.event == desired_event)
+            .filter(Workflow.id != workflow_id)
+            .first()
+        )
+        if conflict is not None:
+            return (
+                jsonify({"error": "event ist bereits zugeordnet"}),
+                HTTPStatus.CONFLICT,
+            )
+
+    workflow.event = desired_event
+    db.session.commit()
+
+    return jsonify(_serialize_workflow(workflow)), HTTPStatus.OK
+
+
+@bp.get("/workflows/bindings")
+def list_workflow_bindings() -> tuple[object, int]:
+    workflows = (
+        Workflow.query.filter(Workflow.event.isnot(None))
+        .order_by(Workflow.event.asc())
+        .all()
+    )
+    payload = [
+        {"event": wf.event, "workflow_id": wf.id, "name": wf.name}
+        for wf in workflows
+        if wf.event is not None
+    ]
+    return jsonify(payload), HTTPStatus.OK
