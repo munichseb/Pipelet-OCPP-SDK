@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   db:
     image: mysql:8
@@ -19,8 +18,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: ../Dockerfile.backend
+      context: .
+      dockerfile: Dockerfile.backend
     env_file: .env
     environment:
       FLASK_ENV: development
