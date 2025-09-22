@@ -1,0 +1,29 @@
+@startuml
+hide footbox
+skinparam monochrome true
+skinparam sequenceMessageAlign center
+
+participant "Event Source" as Source
+participant "Runner" as Runner
+participant "Pipelet Registry" as Registry
+participant "Logger" as Logger
+participant "SSE Stream" as SSE
+
+Source -> Runner: dispatch(event)
+Runner -> Registry: resolve(pipelet.name)
+Registry --> Runner: builtin definition
+Runner -> Runner: run_pipelet(node, context)
+Runner -> Logger: append(entry)
+Logger --> SSE: push(update)
+Runner --> Source: result / ack
+
+loop next node
+  Runner -> Registry: resolve(next)
+  Registry --> Runner: builtin definition
+  Runner -> Runner: run_pipelet(next, context)
+  Runner -> Logger: append(entry)
+  Logger --> SSE: push(update)
+end
+
+Runner --> Source: finished
+@enduml

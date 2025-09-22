@@ -1,0 +1,37 @@
+@startuml
+hide footbox
+skinparam monochrome true
+skinparam sequenceMessageAlign center
+
+participant "Charge Point" as CP
+participant "OCPP Central System" as CS
+participant "Flask API" as API
+participant "Workflow Hooks" as Hooks
+participant "Pipelet Runner" as Runner
+
+== Boot & Heartbeat ==
+CP -> CS: BootNotification
+CS --> CP: BootNotification.conf
+CP -> CS: Heartbeat
+CS --> CP: Heartbeat.conf
+
+== Authorization & Transactions ==
+CP -> CS: Authorize(idTag)
+CS --> CP: Authorize.conf(status)
+CP -> CS: StartTransaction
+CS -> Hooks: emit_event(StartTransaction)
+Hooks -> API: POST /api/events
+API -> Runner: run_pipelet(event)
+Runner --> API: logs & effects
+API --> Hooks: ack
+CS --> CP: StartTransaction.conf
+
+CP -> CS: StopTransaction
+CS -> Hooks: emit_event(StopTransaction)
+Hooks -> API: POST /api/events
+API -> Runner: run_pipelet(event)
+Runner --> API: logs & effects
+API --> Hooks: ack
+CS --> CP: StopTransaction.conf
+
+@enduml

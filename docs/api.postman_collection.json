@@ -1,0 +1,425 @@
+{
+    "info": {
+        "name": "Pipelet OCPP SDK",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "Postman collection covering health checks, authentication, pipelets, workflows, simulator and logs"
+    },
+    "item": [
+        {
+            "name": "Health",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/health",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "health"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "List tokens",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/tokens",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "tokens"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"local admin\",\n  \"role\": \"admin\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/tokens",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "tokens"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Pipelets",
+            "item": [
+                {
+                    "name": "List pipelets",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pipelets",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pipelets"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create pipelet",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Demo Pipelet\",\n  \"event\": \"StartTransaction\",\n  \"code\": \"def run(context):\\n    context.log(\\\"Hello from Postman!\\\")\\n    return context\\n\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pipelets",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pipelets"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete pipelet",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/pipelets/{{pipeletId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "pipelets",
+                                "{{pipeletId}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Workflows",
+            "item": [
+                {
+                    "name": "List workflows",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/workflows",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "workflows"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create workflow",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Demo Workflow\",\n  \"event\": \"StartTransaction\",\n  \"graph_json\": \"{\\\"nodes\\\": {}}\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/workflows",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "workflows"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Bind workflow to event",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"workflow_id\": \"{{workflowId}}\",\n  \"event\": \"StartTransaction\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/workflows/{{workflowId}}/bindings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "workflows",
+                                "{{workflowId}}",
+                                "bindings"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Simulator",
+            "item": [
+                {
+                    "name": "Connect charge point",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"cp_id\": \"CP_1\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/sim/connect",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sim",
+                                "connect"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Start transaction",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"cp_id\": \"CP_1\",\n  \"id_tag\": \"DEMO-123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/sim/start_transaction",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "sim",
+                                "start_transaction"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Logs",
+            "item": [
+                {
+                    "name": "Stream logs",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "text/event-stream"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/logs/stream",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "logs",
+                                "stream"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Export / Import",
+            "item": [
+                {
+                    "name": "Export snapshot",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/export",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "export"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Import snapshot",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"version\": 1,\n  \"pipelets\": [],\n  \"workflows\": []\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/import",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "import"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "if (!pm.variables.get('baseUrl')) {",
+                    "  pm.variables.set('baseUrl', 'http://localhost:5000');",
+                    "}",
+                    "if (!pm.variables.get('token')) {",
+                    "  console.warn('Set the `token` variable to a valid Bearer token before calling authenticated routes.');",
+                    "}"
+                ]
+            }
+        }
+    ]
+}
