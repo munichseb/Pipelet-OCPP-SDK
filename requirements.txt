@@ -1,0 +1,8 @@
+flask
+flask_sqlalchemy
+pymysql
+flask_cors
+pytest
+pytest-cov
+ruff
+black
