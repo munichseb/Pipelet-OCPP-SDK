@@ -58,6 +58,22 @@ Rete.js that allows authoring and persisting workflow diagrams.
    npm run build
    ```
 
+## Authentication & security
+
+All non-health API routes require a Bearer token. Tokens are managed via the new `/api/auth/tokens` endpoints and carry a
+role:
+
+- `admin` tokens can create, update and delete resources and issue or revoke other tokens.
+- `readonly` tokens may call read-only endpoints (e.g. list pipelets/logs) but are blocked from mutating operations.
+
+The frontend exposes a **TokenPanel** in the palette column that lets administrators generate new tokens (the plaintext value
+is only shown once), revoke existing ones and persist the token for subsequent API calls in the browser's local storage. Paste
+an issued token into the "Aktives Token" input to apply it globally; the setting is stored locally and used for WebSocket
+connections and AJAX requests.
+
+Sensitive endpoints such as pipelet test runs and the streaming log feed are rate-limited per token/IP (10 test executions per
+minute; the log stream only accepts 20 requests per second) to mitigate accidental overload.
+
 ### Docker Compose
 
 To start the complete stack (MySQL, backend API and frontend) run:

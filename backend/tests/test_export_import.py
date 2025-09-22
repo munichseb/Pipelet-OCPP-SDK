@@ -1,54 +1,14 @@
-"""Tests for the export/import configuration API."""
+"""Tests for the configuration export and import endpoints."""
+
 from __future__ import annotations
 
 import json
-import pathlib
-import sys
 
 import pytest
-from sqlalchemy.pool import StaticPool
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-
-def _load_app_dependencies():
-    from app import Config, create_app
-    from backend.app.extensions import db
-    from backend.app.models.pipelet import Pipelet
-    from backend.app.models.workflow import Workflow
-
-    return Config, create_app, db, Pipelet, Workflow
-
-
-ConfigBase, create_app, db, Pipelet, Workflow = _load_app_dependencies()
-
-
-class TestConfig(ConfigBase):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite+pysqlite:///:memory:"
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        "poolclass": StaticPool,
-        "connect_args": {"check_same_thread": False},
-    }
-    ENABLE_OCPP_SERVER = False
-    ENABLE_SIM_API = False
-
-
-@pytest.fixture(scope="module")
-def app():
-    app = create_app(TestConfig)
-    ctx = app.app_context()
-    ctx.push()
-    yield app
-    db.session.remove()
-    ctx.pop()
-
-
-@pytest.fixture()
-def client(app):
-    return app.test_client()
+from backend.app.extensions import db
+from backend.app.models.pipelet import Pipelet
+from backend.app.models.workflow import Workflow
 
 
 @pytest.fixture(autouse=True)
@@ -63,26 +23,39 @@ def clean_database():
 
 
 def _create_pipelet(name: str, event: str = "StartTransaction") -> Pipelet:
-    pipelet = Pipelet(name=name, event=event, code="def run(message, context):\n    return message")
+    pipelet = Pipelet(
+        name=name,
+        event=event,
+        code="def run(message, context):\n    return message",
+    )
     db.session.add(pipelet)
     db.session.commit()
     return pipelet
 
 
 def _create_workflow(name: str, event: str = "StartTransaction") -> Workflow:
-    graph = json.dumps({"nodes": {"1": {"id": 1, "data": {"code": "def run(message, context):\n    return message"}}}})
+    graph = json.dumps(
+        {
+            "nodes": {
+                "1": {
+                    "id": 1,
+                    "data": {"code": "def run(message, context):\n    return message"},
+                }
+            }
+        }
+    )
     workflow = Workflow(name=name, event=event, graph_json=graph)
     db.session.add(workflow)
     db.session.commit()
     return workflow
 
 
-def test_export_roundtrip(client):
+def test_export_roundtrip(client, admin_headers):
     _create_pipelet("Alpha", "StartTransaction")
     _create_pipelet("Beta", "Authorize")
     created_workflow = _create_workflow("WF-1", "StartTransaction")
 
-    response = client.get("/api/export")
+    response = client.get("/api/export", headers=admin_headers)
     assert response.status_code == 200
     data = response.get_json()
     assert data["version"] == 1
@@ -93,7 +66,7 @@ def test_export_roundtrip(client):
     db.session.query(Workflow).delete()
     db.session.commit()
 
-    import_response = client.post("/api/import", json=data)
+    import_response = client.post("/api/import", json=data, headers=admin_headers)
     assert import_response.status_code == 200
     summary = import_response.get_json()
     assert summary == {"created": 3, "updated": 0}
@@ -105,27 +78,33 @@ def test_export_roundtrip(client):
 
     restored_workflow = Workflow.query.filter_by(name=created_workflow.name).first()
     assert restored_workflow is not None
-    assert json.loads(restored_workflow.graph_json) == json.loads(created_workflow.graph_json)
+    assert json.loads(restored_workflow.graph_json) == json.loads(
+        created_workflow.graph_json
+    )
 
 
-def test_import_conflict_without_overwrite(client):
+def test_import_conflict_without_overwrite(client, admin_headers):
     _create_pipelet("Exists", "Authorize")
 
     payload = {
         "version": 1,
         "pipelets": [
-            {"name": "Exists", "event": "Authorize", "code": "def run(message, context):\n    return message"}
+            {
+                "name": "Exists",
+                "event": "Authorize",
+                "code": "def run(message, context):\n    return message",
+            }
         ],
         "workflows": [],
     }
 
-    response = client.post("/api/import", json=payload)
+    response = client.post("/api/import", json=payload, headers=admin_headers)
     assert response.status_code == 409
     data = response.get_json()
     assert "already exists" in data["error"]
 
 
-def test_import_with_overwrite(client):
+def test_import_with_overwrite(client, admin_headers):
     pipelet = _create_pipelet("Overwrite", "Authorize")
     workflow = _create_workflow("WF-Overwrite", "Authorize")
 
@@ -147,7 +126,12 @@ def test_import_with_overwrite(client):
         ],
     }
 
-    response = client.post("/api/import", json=payload, query_string={"overwrite": "true"})
+    response = client.post(
+        "/api/import",
+        json=payload,
+        query_string={"overwrite": "true"},
+        headers=admin_headers,
+    )
     assert response.status_code == 200
     summary = response.get_json()
     assert summary == {"created": 0, "updated": 2}

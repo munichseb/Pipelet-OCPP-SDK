@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { AxiosHeaders } from 'axios'
 
 const apiBaseURL = import.meta.env.VITE_API_BASE ?? ''
 
@@ -7,6 +7,71 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+})
+
+const TOKEN_STORAGE_KEY = 'pipelet.api.token'
+export const API_TOKEN_CHANGED_EVENT = 'pipelet-token-change'
+const isBrowser = typeof window !== 'undefined'
+
+let authToken: string | null = null
+
+function loadInitialToken(): string | null {
+  if (!isBrowser) {
+    return null
+  }
+  try {
+    const stored = window.localStorage.getItem(TOKEN_STORAGE_KEY)
+    return stored && stored.trim() ? stored : null
+  } catch (error) {
+    console.warn('Konnte gespeichertes Token nicht laden', error)
+    return null
+  }
+}
+
+authToken = loadInitialToken()
+
+if (authToken) {
+  apiClient.defaults.headers.common.Authorization = `Bearer ${authToken}`
+}
+
+export function getApiToken(): string | null {
+  return authToken
+}
+
+export function setApiToken(token: string | null): void {
+  authToken = token && token.trim() ? token.trim() : null
+  if (isBrowser) {
+    try {
+      if (authToken) {
+        window.localStorage.setItem(TOKEN_STORAGE_KEY, authToken)
+      } else {
+        window.localStorage.removeItem(TOKEN_STORAGE_KEY)
+      }
+    } catch (error) {
+      console.warn('Konnte Token nicht im Speicher aktualisieren', error)
+    }
+    window.dispatchEvent(new CustomEvent(API_TOKEN_CHANGED_EVENT))
+  }
+  if (authToken) {
+    apiClient.defaults.headers.common.Authorization = `Bearer ${authToken}`
+  } else {
+    delete apiClient.defaults.headers.common.Authorization
+  }
+}
+
+apiClient.interceptors.request.use((config) => {
+  if (authToken) {
+    if (config.headers) {
+      if (typeof config.headers.set === 'function') {
+        config.headers.set('Authorization', `Bearer ${authToken}`)
+      } else {
+        ;(config.headers as Record<string, string>).Authorization = `Bearer ${authToken}`
+      }
+    } else {
+      config.headers = new AxiosHeaders({ Authorization: `Bearer ${authToken}` })
+    }
+  }
+  return config
 })
 
 export interface PipeletSummary {
@@ -52,6 +117,20 @@ export interface SimulatorState {
 export interface SimulatorStatus {
   connected: boolean
   lastEventTs: string | null
+}
+
+export type ApiTokenRole = 'admin' | 'readonly'
+
+export interface ApiTokenInfo {
+  id: number
+  name: string
+  role: ApiTokenRole
+  created_at: string
+  revoked_at: string | null
+}
+
+export interface ApiTokenCreateResponse extends ApiTokenInfo {
+  token: string
 }
 
 export async function fetchPipelets(): Promise<PipeletSummary[]> {
@@ -227,6 +306,45 @@ export async function getHealthStatus(): Promise<boolean> {
   } catch (error) {
     return false
   }
+}
+
+export async function listApiTokens(): Promise<ApiTokenInfo[]> {
+  const response = await apiClient.get('/api/auth/tokens')
+  return Array.isArray(response.data)
+    ? (response.data as Array<Record<string, unknown>>).map((item) => ({
+        id: Number(item.id),
+        name: String(item.name ?? ''),
+        role: (item.role as ApiTokenRole) ?? 'readonly',
+        created_at: String(item.created_at ?? ''),
+        revoked_at:
+          typeof item.revoked_at === 'string' && item.revoked_at.trim()
+            ? String(item.revoked_at)
+            : null,
+      }))
+    : []
+}
+
+export async function createApiToken(payload: {
+  name: string
+  role: ApiTokenRole
+}): Promise<ApiTokenCreateResponse> {
+  const response = await apiClient.post('/api/auth/tokens', payload)
+  const data = response.data as Record<string, unknown>
+  return {
+    id: Number(data.id),
+    name: String(data.name ?? payload.name),
+    role: (data.role as ApiTokenRole) ?? payload.role,
+    created_at: String(data.created_at ?? ''),
+    revoked_at:
+      typeof data.revoked_at === 'string' && data.revoked_at.trim()
+        ? String(data.revoked_at)
+        : null,
+    token: String(data.token ?? ''),
+  }
+}
+
+export async function revokeApiToken(tokenId: number): Promise<void> {
+  await apiClient.delete(`/api/auth/tokens/${tokenId}`)
 }
 
 function normalizeLogEntry(data: Record<string, unknown>): LogEntry {

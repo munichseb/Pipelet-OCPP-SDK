@@ -11,6 +11,7 @@ from ..ocpp.simulator import (
     SimulatorStatus,
     get_simulator,
 )
+from ..utils.auth import require_token
 
 bp = Blueprint("sim", __name__)
 
@@ -63,6 +64,7 @@ def _require_id_tag() -> str:
 
 
 @bp.post("/sim/connect")
+@require_token(role="admin")
 def connect() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     try:
@@ -77,6 +79,7 @@ def connect() -> tuple[object, int]:
 
 
 @bp.post("/sim/disconnect")
+@require_token(role="admin")
 def disconnect() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     try:
@@ -91,6 +94,7 @@ def disconnect() -> tuple[object, int]:
 
 
 @bp.post("/sim/heartbeat/start")
+@require_token(role="admin")
 def start_heartbeat() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     try:
@@ -105,6 +109,7 @@ def start_heartbeat() -> tuple[object, int]:
 
 
 @bp.post("/sim/heartbeat/stop")
+@require_token(role="admin")
 def stop_heartbeat() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     try:
@@ -119,6 +124,7 @@ def stop_heartbeat() -> tuple[object, int]:
 
 
 @bp.post("/sim/rfid")
+@require_token(role="admin")
 def authorize() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     try:
@@ -134,6 +140,7 @@ def authorize() -> tuple[object, int]:
 
 
 @bp.post("/sim/start")
+@require_token(role="admin")
 def start_transaction() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     try:
@@ -149,6 +156,7 @@ def start_transaction() -> tuple[object, int]:
 
 
 @bp.post("/sim/stop")
+@require_token(role="admin")
 def stop_transaction() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     try:
@@ -163,6 +171,7 @@ def stop_transaction() -> tuple[object, int]:
 
 
 @bp.get("/sim/status")
+@require_token()
 def get_status() -> tuple[object, int]:
     simulator = get_simulator(current_app)
     cp_id = request.args.get("cp_id", "CP_1").strip()

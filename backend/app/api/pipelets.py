@@ -9,10 +9,11 @@ from typing import Any
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 
-from ..extensions import db
+from ..extensions import db, limiter
 from ..models.logs import RunLog
 from ..models.pipelet import ALLOWED_EVENTS, Pipelet
 from ..pipelets.runtime import run_pipelet
+from ..utils.auth import require_token
 
 bp = Blueprint("pipelets", __name__)
 
@@ -64,6 +65,7 @@ def _ensure_unique_name(name: str, pipelet_id: int | None = None) -> bool:
 
 
 @bp.post("/pipelets")
+@require_token(role="admin")
 def create_pipelet() -> tuple[object, int]:
     payload = request.get_json(force=True, silent=True) or {}
     data, errors = _validate_pipelet_payload(payload)
@@ -81,6 +83,7 @@ def create_pipelet() -> tuple[object, int]:
 
 
 @bp.get("/pipelets")
+@require_token()
 def list_pipelets() -> tuple[object, int]:
     event_filter = request.args.get("event")
     query = Pipelet.query
@@ -91,12 +94,14 @@ def list_pipelets() -> tuple[object, int]:
 
 
 @bp.get("/pipelets/<int:pipelet_id>")
+@require_token()
 def get_pipelet(pipelet_id: int) -> tuple[object, int]:
     pipelet = Pipelet.query.get_or_404(pipelet_id)
     return jsonify(_pipelet_to_dict(pipelet)), HTTPStatus.OK
 
 
 @bp.put("/pipelets/<int:pipelet_id>")
+@require_token(role="admin")
 def update_pipelet(pipelet_id: int) -> tuple[object, int]:
     pipelet = Pipelet.query.get_or_404(pipelet_id)
     payload = request.get_json(force=True, silent=True) or {}
@@ -116,6 +121,7 @@ def update_pipelet(pipelet_id: int) -> tuple[object, int]:
 
 
 @bp.delete("/pipelets/<int:pipelet_id>")
+@require_token(role="admin")
 def delete_pipelet(pipelet_id: int) -> tuple[object, int]:
     pipelet = Pipelet.query.get_or_404(pipelet_id)
     db.session.delete(pipelet)
@@ -124,6 +130,8 @@ def delete_pipelet(pipelet_id: int) -> tuple[object, int]:
 
 
 @bp.post("/pipelets/<int:pipelet_id>/test")
+@require_token(role="admin")
+@limiter.limit("10 per minute")
 def test_pipelet(pipelet_id: int) -> tuple[object, int]:
     pipelet = Pipelet.query.get_or_404(pipelet_id)
     payload = request.get_json(force=True, silent=True) or {}

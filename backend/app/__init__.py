@@ -4,7 +4,7 @@ from __future__ import annotations
 from flask import Flask
 
 from .config import Config
-from .extensions import cors, db
+from .extensions import cors, db, limiter
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -15,13 +15,25 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     db.init_app(app)
 
     if cors is not None:
-        cors.init_app(app)
+        allowed_origins = [
+            origin.strip()
+            for origin in (app.config.get("CORS_ALLOWED_ORIGINS") or "").split(",")
+            if origin.strip()
+        ]
+        cors.init_app(
+            app,
+            resources={r"/api/*": {"origins": allowed_origins}},
+            allow_headers=["Content-Type", "Authorization"],
+        )
+
+    limiter.init_app(app)
 
     from .api.health import bp as health_bp
     from .api.logs import bp as logs_bp
     from .api.export import bp as export_bp
     from .api.pipelets import bp as pipelets_bp
     from .api.workflow import bp as workflow_bp
+    from .api.auth import bp as auth_bp
 
     sim_bp = None
     if app.config.get("ENABLE_SIM_API", True):
@@ -34,10 +46,11 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(export_bp, url_prefix="/api")
     app.register_blueprint(pipelets_bp, url_prefix="/api")
     app.register_blueprint(workflow_bp, url_prefix="/api")
+    app.register_blueprint(auth_bp, url_prefix="/api")
 
     with app.app_context():
         # Import models to ensure they are registered with SQLAlchemy before creating tables.
-        from .models import logs, pipelet, workflow  # noqa: F401
+        from .models import auth, logs, pipelet, workflow  # noqa: F401
 
         db.create_all()
 

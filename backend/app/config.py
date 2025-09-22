@@ -13,3 +13,4 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
     JSONIFY_PRETTYPRINT_REGULAR: bool = False
+    CORS_ALLOWED_ORIGINS: str = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173")

@@ -11,6 +11,7 @@ from sqlalchemy import func
 
 from ..extensions import db
 from ..models.workflow import Workflow
+from ..utils.auth import require_token
 
 bp = Blueprint("workflows", __name__)
 
@@ -99,6 +100,7 @@ def _normalize_event(value: Any) -> tuple[str | None, list[str]]:
 
 
 @bp.post("/workflows")
+@require_token(role="admin")
 def create_workflow() -> tuple[object, int]:
     payload = request.get_json(silent=True, force=True) or {}
     name = (payload.get("name") or "").strip()
@@ -121,6 +123,7 @@ def create_workflow() -> tuple[object, int]:
 
 
 @bp.get("/workflows")
+@require_token()
 def list_workflows() -> tuple[object, int]:
     workflows = Workflow.query.order_by(Workflow.created_at.desc()).all()
     return (
@@ -130,12 +133,14 @@ def list_workflows() -> tuple[object, int]:
 
 
 @bp.get("/workflows/<int:workflow_id>")
+@require_token()
 def get_workflow(workflow_id: int) -> tuple[object, int]:
     workflow = Workflow.query.get_or_404(workflow_id)
     return jsonify(_serialize_workflow(workflow)), HTTPStatus.OK
 
 
 @bp.put("/workflows/<int:workflow_id>")
+@require_token(role="admin")
 def update_workflow(workflow_id: int) -> tuple[object, int]:
     workflow = Workflow.query.get_or_404(workflow_id)
     payload = request.get_json(silent=True, force=True) or {}
@@ -160,6 +165,7 @@ def update_workflow(workflow_id: int) -> tuple[object, int]:
 
 
 @bp.put("/workflows/<int:workflow_id>/event")
+@require_token(role="admin")
 def update_workflow_event(workflow_id: int) -> tuple[object, int]:
     workflow = Workflow.query.get_or_404(workflow_id)
     payload = request.get_json(silent=True, force=True) or {}
@@ -187,6 +193,7 @@ def update_workflow_event(workflow_id: int) -> tuple[object, int]:
 
 
 @bp.get("/workflows/bindings")
+@require_token()
 def list_workflow_bindings() -> tuple[object, int]:
     workflows = (
         Workflow.query.filter(Workflow.event.isnot(None))
