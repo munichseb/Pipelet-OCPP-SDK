@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="title desc">
+  <title id="title">Pipelet workflow studio overview</title>
+  <desc id="desc">Stylised representation of the Pipelet workflow dashboard with canvas, simulator controls and logs.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b1f3a" />
+      <stop offset="100%" stop-color="#273469" />
+    </linearGradient>
+  </defs>
+  <rect width="960" height="540" fill="url(#bg)" rx="24" />
+  <rect x="40" y="40" width="360" height="460" fill="#ffffff11" stroke="#9fb5ff" stroke-width="2" rx="16" />
+  <text x="60" y="90" font-family="'Fira Sans', Arial, sans-serif" font-size="28" fill="#f0f4ff">Token Panel</text>
+  <rect x="430" y="40" width="490" height="300" fill="#11162b" stroke="#9fb5ff" stroke-width="2" rx="16" />
+  <text x="450" y="90" font-family="'Fira Sans', Arial, sans-serif" font-size="28" fill="#f0f4ff">Workflow Canvas</text>
+  <line x1="470" y1="130" x2="890" y2="130" stroke="#273fa9" stroke-width="6" stroke-linecap="round" />
+  <line x1="470" y1="190" x2="820" y2="190" stroke="#3f83f8" stroke-width="6" stroke-linecap="round" />
+  <line x1="470" y1="250" x2="760" y2="250" stroke="#60a5fa" stroke-width="6" stroke-linecap="round" />
+  <rect x="430" y="360" width="490" height="140" fill="#121f3d" stroke="#9fb5ff" stroke-width="2" rx="16" />
+  <text x="450" y="400" font-family="'Fira Sans', Arial, sans-serif" font-size="28" fill="#f0f4ff">Live Logs</text>
+  <text x="450" y="440" font-family="'Fira Sans', Arial, sans-serif" font-size="20" fill="#cbd5f5">[12:01:34] CP_1 → StartTransaction</text>
+  <text x="450" y="470" font-family="'Fira Sans', Arial, sans-serif" font-size="20" fill="#9fb5ff">[12:01:36] Runner → HTTP Webhook</text>
+  <rect x="60" y="140" width="320" height="90" fill="#1f2a55" stroke="#9fb5ff" stroke-width="1" rx="12" />
+  <text x="80" y="180" font-family="'Fira Sans', Arial, sans-serif" font-size="22" fill="#f0f4ff">Create API Token</text>
+  <text x="80" y="210" font-family="'Fira Sans', Arial, sans-serif" font-size="16" fill="#cbd5f5">Copy once and store securely</text>
+  <rect x="60" y="260" width="320" height="110" fill="#1f2a55" stroke="#9fb5ff" stroke-width="1" rx="12" />
+  <text x="80" y="300" font-family="'Fira Sans', Arial, sans-serif" font-size="22" fill="#f0f4ff">Simulator Controls</text>
+  <text x="80" y="330" font-family="'Fira Sans', Arial, sans-serif" font-size="16" fill="#cbd5f5">Connect · Authorize · Start/Stop</text>
+</svg>

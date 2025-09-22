@@ -1,143 +1,103 @@
 # Pipelet OCPP SDK
 
-This repository bundles the Flask backend and a Vite/React frontend used to orchestrate workflows composed of Pipelets. The
-backend exposes REST endpoints for pipelets, workflow storage and log inspection; the frontend renders a workflow canvas based on
-Rete.js that allows authoring and persisting workflow diagrams.
+[![CI](https://img.shields.io/github/actions/workflow/status/pipelet/Pipelet-OCPP-SDK/ci.yml?branch=main&label=CI)](https://github.com/pipelet/Pipelet-OCPP-SDK/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## Local development
+A batteries-included developer stack for orchestrating **Pipelet** workflows reacting to OCPP events. The repository bundles a
+Flask REST API, an OCPP 1.6 central system, a headless simulator and the Vite/React based workflow studio.
 
-### Backend (Flask)
+<div align="center">
+  <img src="docs/images/dashboard.svg" alt="Pipelet workflow studio" width="640" />
+</div>
 
-1. Create a Python 3.11 virtual environment and install the dependencies:
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-2. Configure the database connection if necessary. By default the application expects a MySQL instance:
-
-   ```bash
-   export DATABASE_URL="mysql+pymysql://app:app@localhost:3306/pipelet_sandbox"
-   ```
-
-3. Start the development server:
-
-   ```bash
-   flask --app backend/wsgi.py run
-   ```
-
-4. Run the backend test suite:
-
-   ```bash
-   pytest
-   ```
-
-### Frontend (Vite + React)
-
-1. Install dependencies:
-
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-2. Start the Vite dev server (defaults to port 5173):
-
-   ```bash
-   npm run dev -- --host
-   ```
-
-   The application expects the backend API under the `VITE_API_BASE` environment variable (defaults to the same origin). During
-   local development you can export `VITE_API_BASE=http://localhost:5000`.
-
-3. Build the production bundle:
-
-   ```bash
-   npm run build
-   ```
-
-## Authentication & security
-
-All non-health API routes require a Bearer token. Tokens are managed via the new `/api/auth/tokens` endpoints and carry a
-role:
-
-- `admin` tokens can create, update and delete resources and issue or revoke other tokens.
-- `readonly` tokens may call read-only endpoints (e.g. list pipelets/logs) but are blocked from mutating operations.
-
-The frontend exposes a **TokenPanel** in the palette column that lets administrators generate new tokens (the plaintext value
-is only shown once), revoke existing ones and persist the token for subsequent API calls in the browser's local storage. Paste
-an issued token into the "Aktives Token" input to apply it globally; the setting is stored locally and used for WebSocket
-connections and AJAX requests.
-
-Sensitive endpoints such as pipelet test runs and the streaming log feed are rate-limited per token/IP (10 test executions per
-minute; the log stream only accepts 20 requests per second) to mitigate accidental overload.
-
-### Docker Compose
-
-To start the complete stack (MySQL, backend API and frontend) run:
+## Quickstart
 
 ```bash
+cp .env.example .env
 docker compose up --build
 ```
 
-This exposes the backend under [http://localhost:5000](http://localhost:5000) and the workflow canvas frontend under
-[http://localhost:5173](http://localhost:5173).
+- API: <http://localhost:5000>
+- Frontend: <http://localhost:5173>
+- OCPP Central System WebSocket: `ws://localhost:9000`
 
-## Simulator dashboard & live logs
-
-The frontend includes a simulator dashboard that bundles charge point controls, connection status indicators and the
-streaming log console:
-
-1. The **Charge Point Simulator** panel lets you choose a custom CP-ID (defaults to `CP_1`), trigger connect/disconnect,
-   send RFID tokens and start/stop transactions or periodic heartbeats. All interactions call the matching REST endpoints
-   under `/api/sim/*`.
-2. The status bars display the connectivity of the central system (WebSocket listener on `:9000`) and the currently
-   selected charge point. They refresh every few seconds and show the timestamp of the latest event.
-3. The live log viewer subscribes to the server-sent events stream, supports source filters, full-text search with
-   highlighting, auto-scroll toggles and a "Nur letzte N" cap. Use the *Clear* button to reset the local view or
-   *Download* to fetch an NDJSON snapshot via `/api/logs/download`.
-
-## Continuous Integration
-
-GitHub Actions runs linting (Ruff) and the pytest suite on every push and pull request to ensure code quality.
-
-## Built-in pipelets
-
-The backend ships with a curated set of built-in pipelet templates that cover common tasks such as routing decisions, conditional
-filtering, structured logging and integrations (HTTP webhook, MQTT stub). Their source can be found under
-`backend/app/pipelets/builtins`. Each template defines a `run` function and is available in the UI palette as soon as it exists in
-the database.
-
-Use the seed script below to populate the database with the latest versions of all built-in definitions.
-
-## Export & import
-
-Complete configurations consisting of pipelets and workflows can be exported as JSON and later restored. The API exposes two
-endpoints:
-
-- `GET /api/export` – returns the current snapshot with lists of pipelets and workflows.
-- `POST /api/import` – accepts the same structure and recreates or updates the stored definitions. Passing `?overwrite=true`
-  updates entries with matching names; without the flag the import fails if duplicates are encountered.
-
-The JSON structure has the shape:
-
-```json
-{
-  "version": 1,
-  "pipelets": [{"name": "…", "event": "…", "code": "…"}],
-  "workflows": [{"name": "…", "event": "…", "graph_json": "…"}]
-}
-```
-
-## Seed example data
-
-Run the seed script to insert the built-in pipelets and an example workflow (`Debug Template -> Start Meter Transformer -> HTTP
-Webhook`) bound to the `StartTransaction` event:
+Once the containers are healthy, seed demo data to explore the pre-wired workflow:
 
 ```bash
-python backend/scripts/seed.py
+make seed
 ```
 
-The script is idempotent – it updates existing entries to the shipped defaults.
+The seed is idempotent and creates the latest built-in pipelets together with the **StartTransaction Flow** example workflow.
+
+### Authentication
+
+Every API request (except `/health`) requires a Bearer token. Create a token in the frontend **TokenPanel** or issue one via:
+
+```bash
+curl -X POST http://localhost:5000/api/auth/tokens \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "local dev", "role": "admin"}'
+```
+
+The plaintext token is only shown once — copy it and use it as `Authorization: Bearer <token>` header and in the OCPP simulator
+settings panel.
+
+## Developer workflow
+
+The repository ships with a convenience `Makefile`:
+
+| Command           | Description                                    |
+| ----------------- | ---------------------------------------------- |
+| `make up`         | Build and launch the full Docker stack         |
+| `make down`       | Stop and remove containers and volumes         |
+| `make test`       | Execute the backend test-suite (pytest)        |
+| `make seed`       | Synchronise built-in pipelets & demo workflow  |
+| `make export`     | Export workflows & pipelets to `export.json`   |
+| `make import`     | Import the contents of `export.json`           |
+
+To develop frontend or backend code outside Docker, inspect [`docs/dev.md`](docs/dev.md) for virtualenv and Vite specific
+instructions.
+
+### Environment configuration
+
+Configuration is controlled via `.env`. Duplicate the provided template to get started:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Purpose | Default |
+| -------- | ------- | ------- |
+| `DATABASE_URL` | SQLAlchemy/MySQL connection URL | `mysql+pymysql://app:app@db:3306/pipelet_sandbox` |
+| `CORS_ALLOWED_ORIGINS` | Comma separated list of allowed origins | `http://localhost:5173` |
+| `OCPP_WS_PORT` | TCP port for the central system WebSocket listener | `9000` |
+| `API_RATE_LIMIT` | Rate limit (per minute) applied to authenticated requests | `100/minute` |
+
+Set the `TOKEN` environment variable before running `make export` or `make import`.
+
+## API collection
+
+An end-to-end [Postman collection](docs/api.postman_collection.json) is available and covers health checks, token management,
+pipelet & workflow CRUD, simulator controls, log retrieval as well as export/import. Import it into Postman or Insomnia to
+exercise the stack with an existing token.
+
+## Architecture overview
+
+The high-level system architecture, runtime sequence diagrams and import/export formats are documented under
+[`docs/architecture.md`](docs/architecture.md). The PlantUML sources in [`docs/diagrams`](docs/diagrams) can be rendered locally
+(e.g. via <https://www.plantuml.com/plantuml/>) if you want to regenerate the PNG/SVG representations.
+
+## Database utilities
+
+Daily development routines are supported with utility scripts:
+
+- [`backend/scripts/seed.py`](backend/scripts/seed.py) — Sync built-in pipelets and example workflow (idempotent).
+- [`backend/scripts/backup.sh`](backend/scripts/backup.sh) — Create a timestamped MySQL dump in `backups/` (uses `.env`).
+- [`backend/scripts/restore.sh`](backend/scripts/restore.sh) — Restore a dump produced by `backup.sh`.
+
+Backups require a running database container. Pass `--env <file>` to target a different environment definition.
+
+## Contributing
+
+Guidelines for issues, pull requests and commit conventions are documented in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Please review the project's [`Code of Conduct`](CODE_OF_CONDUCT.md) before participating in community spaces.
