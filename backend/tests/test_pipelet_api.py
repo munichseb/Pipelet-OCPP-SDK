@@ -13,11 +13,18 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app import Config, create_app
-from backend.app.extensions import db
+
+def _load_app_dependencies():
+    from app import Config, create_app
+    from backend.app.extensions import db
+
+    return Config, create_app, db
 
 
-class TestConfig(Config):
+ConfigBase, create_app, db = _load_app_dependencies()
+
+
+class TestConfig(ConfigBase):
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite+pysqlite:///:memory:"
     SQLALCHEMY_ENGINE_OPTIONS = {
