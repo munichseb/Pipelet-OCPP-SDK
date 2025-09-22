@@ -17,7 +17,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-- API: <http://localhost:5000>
+- API: <http://localhost:9200>
 - Frontend: <http://localhost:5173>
 - OCPP Central System WebSocket: `ws://localhost:9000`
 
@@ -34,7 +34,7 @@ The seed is idempotent and creates the latest built-in pipelets together with th
 Every API request (except `/health`) requires a Bearer token. Create a token in the frontend **TokenPanel** or issue one via:
 
 ```bash
-curl -X POST http://localhost:5000/api/auth/tokens \
+curl -X POST http://localhost:9200/api/auth/tokens \
   -H 'Content-Type: application/json' \
   -d '{"name": "local dev", "role": "admin"}'
 ```

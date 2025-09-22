@@ -413,7 +413,7 @@
                 "type": "text/javascript",
                 "exec": [
                     "if (!pm.variables.get('baseUrl')) {",
-                    "  pm.variables.set('baseUrl', 'http://localhost:5000');",
+                    "  pm.variables.set('baseUrl', 'http://localhost:9200');",
                     "}",
                     "if (!pm.variables.get('token')) {",
                     "  console.warn('Set the `token` variable to a valid Bearer token before calling authenticated routes.');",

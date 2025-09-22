@@ -3,5 +3,5 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend /app
-EXPOSE 5000 9000
+EXPOSE 9200 9000
 CMD ["python","wsgi.py"]
