@@ -11,6 +11,7 @@ from ..models.pipelet import Pipelet
 from ..models.workflow import Workflow
 from .pipelets import _validate_pipelet_payload
 from .workflow import _normalize_event, _normalize_graph
+from ..utils.auth import require_token
 
 bp = Blueprint("export", __name__)
 
@@ -38,6 +39,7 @@ def _serialize_workflows(workflows: Iterable[Workflow]) -> list[dict[str, Any]]:
 
 
 @bp.get("/export")
+@require_token()
 def export_configuration() -> tuple[object, int]:
     """Return a snapshot of all pipelets and workflows."""
 
@@ -109,6 +111,7 @@ def _validate_workflows_for_import(
 
 
 @bp.post("/import")
+@require_token(role="admin")
 def import_configuration() -> tuple[object, int]:
     """Import pipelets and workflows from a snapshot."""
 

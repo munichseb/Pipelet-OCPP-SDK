@@ -506,6 +506,156 @@ select {
   min-width: 120px;
 }
 
+.token-panel {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.token-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.token-panel__status {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+}
+
+.token-panel__status--success {
+  background: rgba(74, 222, 128, 0.2);
+  color: #14532d;
+}
+
+.token-panel__status--error {
+  background: rgba(248, 113, 113, 0.2);
+  color: #7f1d1d;
+}
+
+.token-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.token-panel__label {
+  font-weight: 600;
+}
+
+.token-panel__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.token-panel__form input,
+.token-panel__form select {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #f8fafc;
+}
+
+.token-panel__form button {
+  grid-column: span 2;
+}
+
+.token-panel__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.token-panel__button-secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.token-panel__button-secondary:hover:not(:disabled) {
+  background: #cbd5f5;
+}
+
+.token-panel__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.token-table-wrapper {
+  max-height: 220px;
+  overflow: auto;
+}
+
+.token-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.token-table th,
+.token-table td {
+  padding: 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.token-table th {
+  font-weight: 600;
+  background: #f1f5f9;
+}
+
+.token-table__empty {
+  text-align: center;
+  color: #64748b;
+  padding: 1.5rem 0;
+}
+
+.token-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 20;
+}
+
+.token-modal__content {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+}
+
+.token-modal__token {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.token-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

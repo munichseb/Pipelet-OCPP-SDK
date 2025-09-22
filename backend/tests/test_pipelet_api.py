@@ -3,54 +3,9 @@
 from __future__ import annotations
 
 import json
-import pathlib
-import sys
-
-import pytest
-from sqlalchemy.pool import StaticPool
-
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 
-def _load_app_dependencies():
-    from app import Config, create_app
-    from backend.app.extensions import db
-
-    return Config, create_app, db
-
-
-ConfigBase, create_app, db = _load_app_dependencies()
-
-
-class TestConfig(ConfigBase):
-    TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite+pysqlite:///:memory:"
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        "poolclass": StaticPool,
-        "connect_args": {"check_same_thread": False},
-    }
-    ENABLE_OCPP_SERVER = False
-    ENABLE_SIM_API = False
-
-
-@pytest.fixture(scope="module")
-def app():
-    app = create_app(TestConfig)
-    ctx = app.app_context()
-    ctx.push()
-    yield app
-    db.session.remove()
-    ctx.pop()
-
-
-@pytest.fixture()
-def client(app):
-    return app.test_client()
-
-
-def _create_pipelet(client) -> dict[str, object]:
+def _create_pipelet(client, headers) -> dict[str, object]:
     response = client.post(
         "/api/pipelets",
         json={
@@ -58,12 +13,13 @@ def _create_pipelet(client) -> dict[str, object]:
             "event": "Heartbeat",
             "code": "def run(message, context):\n    return message",
         },
+        headers=headers,
     )
     assert response.status_code == 201
     return response.get_json()
 
 
-def test_create_pipelet(client):
+def test_create_pipelet(client, admin_headers):
     response = client.post(
         "/api/pipelets",
         json={
@@ -71,6 +27,7 @@ def test_create_pipelet(client):
             "event": "Authorize",
             "code": "def run(message, context):\n    return 1",
         },
+        headers=admin_headers,
     )
 
     assert response.status_code == 201
@@ -80,24 +37,25 @@ def test_create_pipelet(client):
     assert data["code"].startswith("def run")
 
 
-def test_create_pipelet_duplicate_name(client):
+def test_create_pipelet_duplicate_name(client, admin_headers):
     payload = {
         "name": "Duplicate",
         "event": "BootNotification",
         "code": "def run(message, context):\n    return None",
     }
-    assert client.post("/api/pipelets", json=payload).status_code == 201
+    assert client.post("/api/pipelets", json=payload, headers=admin_headers).status_code == 201
 
     response = client.post(
         "/api/pipelets",
         json={**payload, "name": payload["name"].lower()},
+        headers=admin_headers,
     )
 
     assert response.status_code == 409
 
 
-def test_update_and_get_pipelet(client):
-    created = _create_pipelet(client)
+def test_update_and_get_pipelet(client, admin_headers):
+    created = _create_pipelet(client, admin_headers)
 
     update_payload = {
         "name": "UpdatedPipelet",
@@ -105,14 +63,14 @@ def test_update_and_get_pipelet(client):
         "code": "def run(message, context):\n    return {\"value\": 42}",
     }
     update_response = client.put(
-        f"/api/pipelets/{created['id']}", json=update_payload
+        f"/api/pipelets/{created['id']}", json=update_payload, headers=admin_headers
     )
     assert update_response.status_code == 200
     updated = update_response.get_json()
     assert updated["name"] == update_payload["name"]
     assert updated["event"] == update_payload["event"]
 
-    detail_response = client.get(f"/api/pipelets/{created['id']}")
+    detail_response = client.get(f"/api/pipelets/{created['id']}", headers=admin_headers)
     assert detail_response.status_code == 200
     detail = detail_response.get_json()
     assert detail["name"] == update_payload["name"]
@@ -120,12 +78,13 @@ def test_update_and_get_pipelet(client):
     assert detail["code"] == update_payload["code"]
 
 
-def test_pipelet_test_run_success(client):
-    created = _create_pipelet(client)
+def test_pipelet_test_run_success(client, admin_headers):
+    created = _create_pipelet(client, admin_headers)
 
     response = client.post(
         f"/api/pipelets/{created['id']}/test",
         json={"message": {"value": 3}, "context": {"extra": True}},
+        headers=admin_headers,
     )
     assert response.status_code == 200
     data = response.get_json()
@@ -133,7 +92,11 @@ def test_pipelet_test_run_success(client):
     assert data["debug"] == ""
     assert data["error"] is None
 
-    logs_response = client.get("/api/logs", query_string={"source": "pipelet", "limit": 1})
+    logs_response = client.get(
+        "/api/logs",
+        query_string={"source": "pipelet", "limit": 1},
+        headers=admin_headers,
+    )
     assert logs_response.status_code == 200
     logs = logs_response.get_json()
     assert logs, "expected a run log entry for the pipelet execution"
@@ -142,7 +105,7 @@ def test_pipelet_test_run_success(client):
     assert payload["event"] == created["event"]
 
 
-def test_pipelet_test_run_timeout(client):
+def test_pipelet_test_run_timeout(client, admin_headers):
     response = client.post(
         "/api/pipelets",
         json={
@@ -150,12 +113,14 @@ def test_pipelet_test_run_timeout(client):
             "event": "StopTransaction",
             "code": "import time\n\ndef run(message, context):\n    time.sleep(2)",
         },
+        headers=admin_headers,
     )
     pipelet = response.get_json()
 
     test_response = client.post(
         f"/api/pipelets/{pipelet['id']}/test",
         json={"message": {}, "timeout": 0.1},
+        headers=admin_headers,
     )
     assert test_response.status_code == 200
     data = test_response.get_json()

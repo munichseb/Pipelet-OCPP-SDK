@@ -10,6 +10,8 @@ from typing import Iterable
 from flask import Blueprint, Response, jsonify, request, stream_with_context
 
 from ..models.logs import RunLog
+from ..extensions import limiter
+from ..utils.auth import require_token
 
 bp = Blueprint("logs", __name__)
 
@@ -34,6 +36,7 @@ def _filter_by_source(query, source: str | None):
 
 
 @bp.get("/logs")
+@require_token()
 def get_logs() -> tuple[object, int]:
     source = request.args.get("source")
     limit = request.args.get("limit", type=int) or 200
@@ -49,6 +52,7 @@ def get_logs() -> tuple[object, int]:
 
 
 @bp.get("/logs/download")
+@require_token()
 def download_logs() -> Response | tuple[object, int]:
     source = request.args.get("source")
     limit = request.args.get("limit", type=int) or 200
@@ -70,6 +74,8 @@ def download_logs() -> Response | tuple[object, int]:
 
 
 @bp.get("/logs/stream")
+@require_token()
+@limiter.limit("20 per second")
 def stream_logs() -> Response | tuple[object, int]:
     source = request.args.get("source")
     query = _filter_by_source(RunLog.query, source)

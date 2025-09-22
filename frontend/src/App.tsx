@@ -17,6 +17,7 @@ import {
   WorkflowCanvas,
   type WorkflowCanvasHandle,
 } from './components/WorkflowCanvas'
+import { TokenPanel } from './components/TokenPanel'
 
 interface StatusMessage {
   type: 'success' | 'error'
@@ -211,6 +212,7 @@ function App(): JSX.Element {
       <StatusBars cpId={cpId} refreshToken={statusRevision} />
       <main className="app-main">
         <aside className="palette-column">
+          <TokenPanel />
           <h2 className="section-title">Pipelets</h2>
           <PipeletPalette onAddPipelet={handleAddPipelet} disabled={!activeWorkflow} />
         </aside>

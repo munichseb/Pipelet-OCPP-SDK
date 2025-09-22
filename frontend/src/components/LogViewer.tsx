@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
+  API_TOKEN_CHANGED_EVENT,
   apiClient,
   downloadLogs,
   fetchLogs,
+  getApiToken,
   getErrorMessage,
   type LogEntry,
   type LogSource,
@@ -33,7 +35,8 @@ export function LogViewer(): JSX.Element {
   const [streamState, setStreamState] = useState<StreamState>('connecting')
   const [isDownloading, setIsDownloading] = useState(false)
   const logContainerRef = useRef<HTMLDivElement | null>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
+  const streamAbortRef = useRef<AbortController | null>(null)
+  const [tokenRevision, setTokenRevision] = useState(0)
 
   const effectiveLimit = Math.max(20, Math.min(limit, 1000))
 
@@ -73,6 +76,15 @@ export function LogViewer(): JSX.Element {
   }, [effectiveLimit])
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    const handle = () => setTokenRevision((value) => value + 1)
+    window.addEventListener(API_TOKEN_CHANGED_EVENT, handle)
+    return () => window.removeEventListener(API_TOKEN_CHANGED_EVENT, handle)
+  }, [])
+
+  useEffect(() => {
     const base = apiClient.defaults.baseURL?.replace(/\/?$/, '') ?? ''
     const params = new URLSearchParams()
     if (source !== 'all') {
@@ -81,51 +93,105 @@ export function LogViewer(): JSX.Element {
     const url = `${base}/api/logs/stream${params.toString() ? `?${params.toString()}` : ''}`
 
     setStreamState('connecting')
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close()
-      eventSourceRef.current = null
+    if (streamAbortRef.current) {
+      streamAbortRef.current.abort()
+      streamAbortRef.current = null
     }
 
-    const eventSource = new EventSource(url)
-    eventSourceRef.current = eventSource
-
-    eventSource.onopen = () => {
-      setStreamState('open')
-    }
-
-    eventSource.onerror = () => {
+    const token = getApiToken()
+    if (!token) {
       setStreamState('error')
+      setStatus({ type: 'error', text: 'API-Token erforderlich, um Logs zu laden.' })
+      return () => {}
     }
 
-    eventSource.onmessage = (event) => {
+    const controller = new AbortController()
+    streamAbortRef.current = controller
+
+    const headers: Record<string, string> = {
+      Accept: 'text/event-stream',
+      Authorization: `Bearer ${token}`,
+    }
+
+    const consume = async (): Promise<void> => {
       try {
-        const raw = JSON.parse(event.data) as Record<string, unknown>
-        const payload: LogEntry = {
-          id: Number(raw.id ?? 0),
-          source: ((raw.source as LogSource) ?? 'pipelet') as LogSource,
-          message: String(raw.message ?? ''),
-          createdAt: String(raw.createdAt ?? ''),
-        }
-        setEntries((prev) => {
-          const exists = prev.some((entry) => entry.id === payload.id)
-          const next = exists
-            ? prev.map((entry) => (entry.id === payload.id ? payload : entry))
-            : [...prev, payload]
-          if (next.length > effectiveLimit) {
-            return next.slice(next.length - effectiveLimit)
-          }
-          return next
+        const response = await fetch(url, {
+          headers,
+          signal: controller.signal,
         })
+        if (!response.ok || !response.body) {
+          setStreamState('error')
+          if (response.status === 401 || response.status === 403) {
+            setStatus({ type: 'error', text: 'Zugriff auf Log-Stream verweigert.' })
+          }
+          return
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder('utf-8')
+        let buffer = ''
+        setStreamState('open')
+
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) {
+            break
+          }
+          buffer += decoder.decode(value, { stream: true })
+          let boundary = buffer.indexOf('\n\n')
+          while (boundary !== -1) {
+            const rawEvent = buffer.slice(0, boundary).replace(/\r\n/g, '\n')
+            buffer = buffer.slice(boundary + 2)
+            boundary = buffer.indexOf('\n\n')
+            if (!rawEvent.trim() || rawEvent.startsWith(':')) {
+              continue
+            }
+            const dataLines = rawEvent
+              .split('\n')
+              .filter((line) => line.startsWith('data:'))
+              .map((line) => line.slice(5).trimStart())
+            if (!dataLines.length) {
+              continue
+            }
+            const payloadText = dataLines.join('\n')
+            try {
+              const raw = JSON.parse(payloadText) as Record<string, unknown>
+              const payload: LogEntry = {
+                id: Number(raw.id ?? 0),
+                source: ((raw.source as LogSource) ?? 'pipelet') as LogSource,
+                message: String(raw.message ?? ''),
+                createdAt: String(raw.createdAt ?? ''),
+              }
+              setEntries((prev) => {
+                const exists = prev.some((entry) => entry.id === payload.id)
+                const next = exists
+                  ? prev.map((entry) => (entry.id === payload.id ? payload : entry))
+                  : [...prev, payload]
+                if (next.length > effectiveLimit) {
+                  return next.slice(next.length - effectiveLimit)
+                }
+                return next
+              })
+            } catch (error) {
+              setStatus({ type: 'error', text: getErrorMessage(error) })
+            }
+          }
+        }
       } catch (error) {
-        setStatus({ type: 'error', text: getErrorMessage(error) })
+        if (!controller.signal.aborted) {
+          setStreamState('error')
+          setStatus({ type: 'error', text: getErrorMessage(error) })
+        }
       }
     }
 
+    void consume()
+
     return () => {
-      eventSource.close()
-      eventSourceRef.current = null
+      controller.abort()
+      streamAbortRef.current = null
     }
-  }, [effectiveLimit, source])
+  }, [effectiveLimit, source, tokenRevision])
 
   useEffect(() => {
     if (!status) {
