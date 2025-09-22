@@ -105,4 +105,41 @@ def test_update_requires_graph(client):
     assert "graph_json" in " ".join(missing_payload.get_json().get("errors", []))
 
 
+def test_workflow_event_binding(client):
+    created = client.post("/api/workflows", json={"name": "Binding"})
+    workflow_id = created.get_json()["id"]
+
+    bind_response = client.put(
+        f"/api/workflows/{workflow_id}/event",
+        json={"event": "StartTransaction"},
+    )
+    assert bind_response.status_code == 200
+    bound = bind_response.get_json()
+    assert bound["event"] == "StartTransaction"
+
+    invalid_response = client.put(
+        f"/api/workflows/{workflow_id}/event",
+        json={"event": "Unknown"},
+    )
+    assert invalid_response.status_code == 400
+
+    other = client.post("/api/workflows", json={"name": "Other"})
+    other_id = other.get_json()["id"]
+    conflict = client.put(
+        f"/api/workflows/{other_id}/event",
+        json={"event": "StartTransaction"},
+    )
+    assert conflict.status_code == 409
+
+    unbind_response = client.put(
+        f"/api/workflows/{workflow_id}/event",
+        json={"event": None},
+    )
+    assert unbind_response.status_code == 200
+    assert unbind_response.get_json()["event"] is None
+
+    bindings_response = client.get("/api/workflows/bindings")
+    assert bindings_response.status_code == 200
+    assert bindings_response.get_json() == []
+
 # Import placed at bottom to avoid circular import within test config

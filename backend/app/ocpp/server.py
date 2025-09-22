@@ -18,6 +18,7 @@ from websockets.exceptions import ConnectionClosed
 from websockets.server import WebSocketServerProtocol
 
 from .logging import persist_run_log
+from ..workflow.runner import run_workflow_for_event
 
 OCPP_SUBPROTOCOL = "ocpp1.6"
 
@@ -74,6 +75,25 @@ class CentralSystemChargePoint(OcppChargePoint):
                 )
         # Connection closed is logged by the server after the handler exits.
 
+    def _execute_workflow(self, event: str, payload: dict[str, object]) -> None:
+        try:
+            with self._server.app.app_context():
+                run_workflow_for_event(
+                    event,
+                    dict(payload),
+                    {"cp_id": self.id, "event": event},
+                )
+        except Exception as exc:  # pragma: no cover - defensive logging
+            persist_run_log(
+                self._server.app,
+                "cs",
+                f"workflow execution for event {event} failed: {exc}",
+            )
+
+    async def _trigger_workflow(self, event: str, payload: dict[str, object]) -> None:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, self._execute_workflow, event, payload)
+
     @on(Action.boot_notification)
     async def on_boot_notification(  # type: ignore[override]
         self,
@@ -81,6 +101,12 @@ class CentralSystemChargePoint(OcppChargePoint):
         charge_point_vendor: str,
         **payload: object,
     ) -> call_result.BootNotification:
+        message = {
+            "charge_point_model": charge_point_model,
+            "charge_point_vendor": charge_point_vendor,
+            **payload,
+        }
+        await self._trigger_workflow("BootNotification", message)
         current_time = datetime.now(UTC).isoformat()
         return call_result.BootNotification(
             current_time=current_time,
@@ -90,6 +116,7 @@ class CentralSystemChargePoint(OcppChargePoint):
 
     @on(Action.heartbeat)
     async def on_heartbeat(self) -> call_result.Heartbeat:  # type: ignore[override]
+        await self._trigger_workflow("Heartbeat", {})
         current_time = datetime.now(UTC).isoformat()
         return call_result.Heartbeat(current_time=current_time)
 
@@ -97,6 +124,7 @@ class CentralSystemChargePoint(OcppChargePoint):
     async def on_authorize(  # type: ignore[override]
         self, id_tag: str
     ) -> call_result.Authorize:
+        await self._trigger_workflow("Authorize", {"id_tag": id_tag})
         id_tag_info = IdTagInfo(status=AuthorizationStatus.accepted)
         return call_result.Authorize(id_tag_info=id_tag_info)
 
@@ -109,6 +137,14 @@ class CentralSystemChargePoint(OcppChargePoint):
         timestamp: str,
         **payload: object,
     ) -> call_result.StartTransaction:
+        message = {
+            "connector_id": connector_id,
+            "id_tag": id_tag,
+            "meter_start": meter_start,
+            "timestamp": timestamp,
+            **payload,
+        }
+        await self._trigger_workflow("StartTransaction", message)
         transaction_id = self._server.next_transaction_id()
         id_tag_info = IdTagInfo(status=AuthorizationStatus.accepted)
         return call_result.StartTransaction(
@@ -124,6 +160,13 @@ class CentralSystemChargePoint(OcppChargePoint):
         transaction_id: int,
         **payload: object,
     ) -> call_result.StopTransaction:
+        message = {
+            "meter_stop": meter_stop,
+            "timestamp": timestamp,
+            "transaction_id": transaction_id,
+            **payload,
+        }
+        await self._trigger_workflow("StopTransaction", message)
         id_tag_info = IdTagInfo(status=AuthorizationStatus.accepted)
         return call_result.StopTransaction(id_tag_info=id_tag_info)
 
