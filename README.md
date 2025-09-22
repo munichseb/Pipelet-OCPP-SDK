@@ -72,3 +72,42 @@ This exposes the backend under [http://localhost:5000](http://localhost:5000) an
 ## Continuous Integration
 
 GitHub Actions runs linting (Ruff) and the pytest suite on every push and pull request to ensure code quality.
+
+## Built-in pipelets
+
+The backend ships with a curated set of built-in pipelet templates that cover common tasks such as routing decisions, conditional
+filtering, structured logging and integrations (HTTP webhook, MQTT stub). Their source can be found under
+`backend/app/pipelets/builtins`. Each template defines a `run` function and is available in the UI palette as soon as it exists in
+the database.
+
+Use the seed script below to populate the database with the latest versions of all built-in definitions.
+
+## Export & import
+
+Complete configurations consisting of pipelets and workflows can be exported as JSON and later restored. The API exposes two
+endpoints:
+
+- `GET /api/export` – returns the current snapshot with lists of pipelets and workflows.
+- `POST /api/import` – accepts the same structure and recreates or updates the stored definitions. Passing `?overwrite=true`
+  updates entries with matching names; without the flag the import fails if duplicates are encountered.
+
+The JSON structure has the shape:
+
+```json
+{
+  "version": 1,
+  "pipelets": [{"name": "…", "event": "…", "code": "…"}],
+  "workflows": [{"name": "…", "event": "…", "graph_json": "…"}]
+}
+```
+
+## Seed example data
+
+Run the seed script to insert the built-in pipelets and an example workflow (`Debug Template -> Start Meter Transformer -> HTTP
+Webhook`) bound to the `StartTransaction` event:
+
+```bash
+python backend/scripts/seed.py
+```
+
+The script is idempotent – it updates existing entries to the shipped defaults.

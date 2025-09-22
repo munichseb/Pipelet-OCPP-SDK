@@ -19,6 +19,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     from .api.health import bp as health_bp
     from .api.logs import bp as logs_bp
+    from .api.export import bp as export_bp
     from .api.pipelets import bp as pipelets_bp
     from .api.workflow import bp as workflow_bp
 
@@ -30,6 +31,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(logs_bp, url_prefix="/api")
     if sim_bp is not None:
         app.register_blueprint(sim_bp, url_prefix="/api")
+    app.register_blueprint(export_bp, url_prefix="/api")
     app.register_blueprint(pipelets_bp, url_prefix="/api")
     app.register_blueprint(workflow_bp, url_prefix="/api")
 
