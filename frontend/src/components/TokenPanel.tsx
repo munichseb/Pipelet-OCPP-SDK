@@ -55,8 +55,12 @@ export function TokenPanel(): JSX.Element {
   const [activeTokenInput, setActiveTokenInput] = useState(getApiToken() ?? '')
   const [isProtectionEnabled, setIsProtectionEnabled] = useState(false)
   const [isProtectionLoading, setIsProtectionLoading] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true)
 
   const maskedActiveToken = maskToken(getApiToken())
+  const collapseLabel = isCollapsed ? 'Ausklappen' : 'Einklappen'
+  const collapseIcon = isCollapsed ? '▼' : '▲'
+  const panelContentId = 'api-token-panel-content'
 
   useEffect(() => {
     let mounted = true
@@ -191,7 +195,10 @@ export function TokenPanel(): JSX.Element {
   }
 
   return (
-    <section className="token-panel" aria-label="API Token Verwaltung">
+    <section
+      className={`token-panel${isCollapsed ? ' token-panel--collapsed' : ''}`}
+      aria-label="API Token Verwaltung"
+    >
       <div className="token-panel__header">
         <div className="token-panel__protection">
           <button
@@ -217,114 +224,132 @@ export function TokenPanel(): JSX.Element {
           </div>
         </div>
         <h2 className="token-panel__title">API Tokens</h2>
-        <button type="button" onClick={() => void refreshTokens()} disabled={isLoading}>
-          Aktualisieren
-        </button>
-      </div>
-      {status && <div className="token-panel__status token-panel__status--success">{status}</div>}
-      {error && <div className="token-panel__status token-panel__status--error">{error}</div>}
-
-      <div className="token-panel__section">
-        <label className="token-panel__label" htmlFor="active-token-input">
-          Aktives Token
-        </label>
-        <input
-          id="active-token-input"
-          type="text"
-          value={activeTokenInput}
-          onChange={(event) => setActiveTokenInput(event.target.value)}
-          placeholder="Token einfügen"
-        />
-        <div className="token-panel__actions">
-          <button type="button" onClick={handleActiveTokenSave}>
-            Speichern
-          </button>
+        <div className="token-panel__header-actions">
           <button
             type="button"
-            className="token-panel__button-secondary"
-            onClick={() => {
-              setActiveTokenInput('')
-              setApiToken(null)
-              setStatus('Token entfernt')
-            }}
+            className="token-panel__collapse-button"
+            aria-expanded={!isCollapsed}
+            aria-controls={panelContentId}
+            onClick={() => setIsCollapsed((value) => !value)}
           >
-            Entfernen
+            <span aria-hidden="true">{collapseIcon}</span>
+            {collapseLabel}
+          </button>
+          <button type="button" onClick={() => void refreshTokens()} disabled={isLoading}>
+            Aktualisieren
           </button>
         </div>
-        <p className="token-panel__hint">Aktuell: {maskedActiveToken}</p>
       </div>
+      <div
+        id={panelContentId}
+        className="token-panel__content"
+        hidden={isCollapsed}
+      >
+        {status && <div className="token-panel__status token-panel__status--success">{status}</div>}
+        {error && <div className="token-panel__status token-panel__status--error">{error}</div>}
 
-      <div className="token-panel__section">
-        <h3>Neues Token</h3>
-        <div className="token-panel__form">
-          <label htmlFor="token-name">Name</label>
+        <div className="token-panel__section">
+          <label className="token-panel__label" htmlFor="active-token-input">
+            Aktives Token
+          </label>
           <input
-            id="token-name"
+            id="active-token-input"
             type="text"
-            value={newTokenName}
-            onChange={(event) => setNewTokenName(event.target.value)}
-            placeholder="z. B. Deployment"
+            value={activeTokenInput}
+            onChange={(event) => setActiveTokenInput(event.target.value)}
+            placeholder="Token einfügen"
           />
-          <label htmlFor="token-role">Rolle</label>
-          <select
-            id="token-role"
-            value={newTokenRole}
-            onChange={(event) => setNewTokenRole(event.target.value as ApiTokenRole)}
-          >
-            <option value="readonly">Read-Only</option>
-            <option value="admin">Admin</option>
-          </select>
-          <button type="button" onClick={handleCreateToken} disabled={isLoading}>
-            Neues Token erstellen
-          </button>
+          <div className="token-panel__actions">
+            <button type="button" onClick={handleActiveTokenSave}>
+              Speichern
+            </button>
+            <button
+              type="button"
+              className="token-panel__button-secondary"
+              onClick={() => {
+                setActiveTokenInput('')
+                setApiToken(null)
+                setStatus('Token entfernt')
+              }}
+            >
+              Entfernen
+            </button>
+          </div>
+          <p className="token-panel__hint">Aktuell: {maskedActiveToken}</p>
         </div>
-      </div>
 
-      <div className="token-panel__section">
-        <h3>Vorhandene Tokens</h3>
-        <div className="token-table-wrapper">
-          <table className="token-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Rolle</th>
-                <th>Erstellt</th>
-                <th>Status</th>
-                <th>Aktionen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tokens.length === 0 ? (
+        <div className="token-panel__section">
+          <h3>Neues Token</h3>
+          <div className="token-panel__form">
+            <label htmlFor="token-name">Name</label>
+            <input
+              id="token-name"
+              type="text"
+              value={newTokenName}
+              onChange={(event) => setNewTokenName(event.target.value)}
+              placeholder="z. B. Deployment"
+            />
+            <label htmlFor="token-role">Rolle</label>
+            <select
+              id="token-role"
+              value={newTokenRole}
+              onChange={(event) => setNewTokenRole(event.target.value as ApiTokenRole)}
+            >
+              <option value="readonly">Read-Only</option>
+              <option value="admin">Admin</option>
+            </select>
+            <button type="button" onClick={handleCreateToken} disabled={isLoading}>
+              Neues Token erstellen
+            </button>
+          </div>
+        </div>
+
+        <div className="token-panel__section">
+          <h3>Vorhandene Tokens</h3>
+          <div className="token-table-wrapper">
+            <table className="token-table">
+              <thead>
                 <tr>
-                  <td colSpan={5} className="token-table__empty">
-                    Keine Tokens vorhanden
-                  </td>
+                  <th>Name</th>
+                  <th>Rolle</th>
+                  <th>Erstellt</th>
+                  <th>Status</th>
+                  <th>Aktionen</th>
                 </tr>
-              ) : (
-                tokens.map((token) => (
-                  <tr key={token.id}>
-                    <td>{token.name}</td>
-                    <td>{ROLE_LABELS[token.role]}</td>
-                    <td>{formatTimestamp(token.created_at)}</td>
-                    <td>
-                      {token.revoked_at
-                        ? `Revoked (${formatTimestamp(token.revoked_at)})`
-                        : 'Aktiv'}
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => handleRevoke(token.id)}
-                        disabled={Boolean(token.revoked_at)}
-                      >
-                        Deaktivieren
-                      </button>
+              </thead>
+              <tbody>
+                {tokens.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="token-table__empty">
+                      Keine Tokens vorhanden
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  tokens.map((token) => (
+                    <tr key={token.id}>
+                      <td>{token.name}</td>
+                      <td>{ROLE_LABELS[token.role]}</td>
+                      <td>{formatTimestamp(token.created_at)}</td>
+                      <td>
+                        {token.revoked_at
+                          ? `Revoked (${formatTimestamp(token.revoked_at)})`
+                          : 'Aktiv'}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => handleRevoke(token.id)}
+                          disabled={Boolean(token.revoked_at)}
+                        >
+                          Deaktivieren
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
