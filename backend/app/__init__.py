@@ -1,7 +1,10 @@
 """Application factory for the Pipelet OCPP backend."""
 from __future__ import annotations
 
+import time
+
 from flask import Flask
+from sqlalchemy.exc import OperationalError
 
 from .config import Config
 from .extensions import cors, db, limiter
@@ -52,7 +55,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         # Import models to ensure they are registered with SQLAlchemy before creating tables.
         from .models import auth, logs, pipelet, workflow  # noqa: F401
 
-        db.create_all()
+        _initialize_database(app)
 
     if app.config.get("ENABLE_OCPP_SERVER", True):
         from .ocpp.server import ensure_server_started
@@ -60,4 +63,25 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         ensure_server_started(app)
 
     return app
+
+
+def _initialize_database(app: Flask) -> None:
+    """Initialize the database with retry logic to handle delayed availability."""
+
+    max_retries = int(app.config.get("DB_INIT_MAX_RETRIES", 30))
+    retry_delay = float(app.config.get("DB_INIT_RETRY_DELAY", 2))
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            db.create_all()
+            return
+        except OperationalError as exc:
+            if attempt >= max_retries:
+                app.logger.exception("Database initialization failed after %s attempts.", attempt)
+                raise
+
+            app.logger.warning(
+                "Database initialization attempt %s/%s failed: %s", attempt, max_retries, exc
+            )
+            time.sleep(retry_delay)
 
