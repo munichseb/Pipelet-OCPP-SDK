@@ -1,8 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import Rete, { Control, Input, Node as ReteNode, NodeEditor, Output, Socket } from 'rete'
+import AreaPlugin from 'rete-area-plugin'
 import ConnectionPlugin from 'rete-connection-plugin'
 import ReactRenderPlugin from 'rete-react-render-plugin'
+import type { Plugin } from 'rete/types/core/plugin'
 import type { PipeletSummary, WorkflowGraph } from '../api'
 
 type EditorJSON = ReturnType<NodeEditor['toJSON']>
@@ -74,6 +76,11 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
 
       const editor = new NodeEditor('pipelet-workflow@0.1.0', containerRef.current)
       editor.use(ConnectionPlugin)
+      editor.use(
+        // rete-area-plugin does not ship TypeScript definitions.
+        AreaPlugin as unknown as Plugin,
+        { background: true } as unknown as void,
+      )
       editor.use(ReactRenderPlugin, { createRoot })
 
       const pipeletComponent = new PipeletComponent()
@@ -101,6 +108,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
       componentRef.current = pipeletComponent
 
       editor.view.resize()
+      AreaPlugin.zoomAt(editor)
       editor.trigger('process')
 
       return () => {
@@ -148,6 +156,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
             suppressEventsRef.current = false
           }
           editor.view.resize()
+          AreaPlugin.zoomAt(editor)
           editor.trigger('process')
           onChange?.(editor.toJSON() as unknown as WorkflowGraph, 'load')
         },
@@ -160,6 +169,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
           editor.clear()
           suppressEventsRef.current = false
           editor.trigger('process')
+          AreaPlugin.zoomAt(editor)
           onChange?.({}, 'load')
         },
       }),
