@@ -356,7 +356,7 @@ export async function importConfiguration(
   options?: { overwrite?: boolean },
 ): Promise<ImportResponse> {
   const overwrite = Boolean(options?.overwrite)
-  const response = await apiClient.post('/api/export/import', payload, {
+  const response = await apiClient.post('/api/import', payload, {
     params: {
       overwrite: overwrite ? 'true' : 'false',
     },
