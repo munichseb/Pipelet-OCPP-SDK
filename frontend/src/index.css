@@ -193,8 +193,8 @@ select {
 }
 
 .status-message--error {
-  background: rgba(248, 113, 113, 0.2);
-  color: #7f1d1d;
+  background: rgba(248, 113, 113, 0.85);
+  color: #ffffff;
 }
 
 .status-bars {
