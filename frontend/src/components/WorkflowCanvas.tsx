@@ -9,6 +9,8 @@ import type { PipeletSummary, WorkflowGraph } from '../api'
 
 type EditorJSON = ReturnType<NodeEditor['toJSON']>
 
+const WORKFLOW_EDITOR_ID = 'pipelet-workflow@0.1.0'
+
 type Mutable<T> = { -readonly [P in keyof T]: T[P] }
 
 function cloneGraph(graph: WorkflowGraph): EditorJSON {
@@ -78,8 +80,20 @@ function normalizeLegacyNode(node: Mutable<Record<string, unknown>>): void {
 }
 
 function normalizeGraph(graph: WorkflowGraph): EditorJSON {
-  const cloned = cloneGraph(graph)
-  const nodes = (cloned.nodes ?? {}) as Record<string, unknown>
+  const cloned = cloneGraph(graph) as Mutable<EditorJSON> & {
+    id?: unknown
+    nodes?: unknown
+  }
+
+  if (typeof cloned.id !== 'string' || !cloned.id.trim()) {
+    cloned.id = WORKFLOW_EDITOR_ID
+  }
+
+  if (!cloned.nodes || typeof cloned.nodes !== 'object' || Array.isArray(cloned.nodes)) {
+    cloned.nodes = {}
+  }
+
+  const nodes = cloned.nodes as Record<string, unknown>
   Object.values(nodes).forEach((rawNode) => {
     if (rawNode && typeof rawNode === 'object') {
       normalizeLegacyNode(rawNode as Mutable<Record<string, unknown>>)
