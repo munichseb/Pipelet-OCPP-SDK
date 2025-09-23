@@ -147,6 +147,11 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
     const editorRef = useRef<NodeEditor | null>(null)
     const componentRef = useRef<PipeletComponent | null>(null)
     const suppressEventsRef = useRef(false)
+    const onChangeRef = useRef(onChange)
+
+    useEffect(() => {
+      onChangeRef.current = onChange
+    }, [onChange])
 
     useEffect(() => {
       if (!containerRef.current) {
@@ -166,11 +171,12 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
       editor.register(pipeletComponent)
 
       const emitChange = (reason: 'load' | 'update') => {
-        if (suppressEventsRef.current || !onChange) {
+        const callback = onChangeRef.current
+        if (suppressEventsRef.current || !callback) {
           return
         }
         const json = editor.toJSON() as unknown as WorkflowGraph
-        onChange(json, reason)
+        callback(json, reason)
       }
 
       const handleUpdate = () => emitChange('update')
@@ -195,7 +201,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
         editorRef.current = null
         componentRef.current = null
       }
-    }, [onChange])
+    }, [])
 
     useImperativeHandle(
       ref,
@@ -237,7 +243,8 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
           editor.view.resize()
           AreaPlugin.zoomAt(editor)
           editor.trigger('process')
-          onChange?.(editor.toJSON() as unknown as WorkflowGraph, 'load')
+          const callback = onChangeRef.current
+          callback?.(editor.toJSON() as unknown as WorkflowGraph, 'load')
         },
         async reset() {
           const editor = editorRef.current
@@ -249,10 +256,11 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
           suppressEventsRef.current = false
           editor.trigger('process')
           AreaPlugin.zoomAt(editor)
-          onChange?.({}, 'load')
+          const callback = onChangeRef.current
+          callback?.({}, 'load')
         },
       }),
-      [onChange],
+      [],
     )
 
     return <div ref={containerRef} className="workflow-canvas" />
