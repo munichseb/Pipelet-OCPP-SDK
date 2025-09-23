@@ -22,6 +22,7 @@ import {
 } from './components/WorkflowCanvas'
 import { TokenPanel } from './components/TokenPanel'
 import { createSeedPayload } from './seed'
+import { DownloadIcon, PlusIcon, SaveIcon, UploadIcon } from './components/icons'
 
 interface StatusMessage {
   type: 'success' | 'error'
@@ -245,21 +246,45 @@ function App(): JSX.Element {
           >
             {workflowOptions}
           </select>
-          <button type="button" onClick={() => selectedWorkflowId && handleWorkflowLoad(Number(selectedWorkflowId))} disabled={isLoading || !selectedWorkflowId}>
-            Laden
-          </button>
-          <button type="button" onClick={handleCreateWorkflow} disabled={isLoading}>
-            Neu
+          <button
+            type="button"
+            className="workflow-controls__icon-button"
+            title="Workflow laden"
+            aria-label="Workflow laden"
+            onClick={() => selectedWorkflowId && handleWorkflowLoad(Number(selectedWorkflowId))}
+            disabled={isLoading || !selectedWorkflowId}
+          >
+            <DownloadIcon />
           </button>
           <button
             type="button"
+            className="workflow-controls__icon-button"
+            title="Neuen Workflow anlegen"
+            aria-label="Neuen Workflow anlegen"
+            onClick={handleCreateWorkflow}
+            disabled={isLoading}
+          >
+            <PlusIcon />
+          </button>
+          <button
+            type="button"
+            className="workflow-controls__icon-button"
+            title="Workflow speichern"
+            aria-label="Workflow speichern"
             onClick={handleSaveWorkflow}
             disabled={isLoading || !activeWorkflow || !graph || !isDirty}
           >
-            Speichern
+            <SaveIcon />
           </button>
-          <button type="button" onClick={handleImportSeed} disabled={isLoading}>
-            Seed importieren
+          <button
+            type="button"
+            className="workflow-controls__icon-button"
+            title="Seed importieren"
+            aria-label="Seed importieren"
+            onClick={handleImportSeed}
+            disabled={isLoading}
+          >
+            <UploadIcon />
           </button>
         </div>
         {status && (
