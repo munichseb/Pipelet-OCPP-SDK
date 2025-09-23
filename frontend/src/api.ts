@@ -133,6 +133,28 @@ export interface SimulatorStatus {
   lastEventTs: string | null
 }
 
+export interface ImportPipeletPayload {
+  name: string
+  event: string
+  code: string
+}
+
+export interface ImportWorkflowPayload {
+  name: string
+  event: string | null
+  graph_json: string
+}
+
+export interface ImportPayload {
+  pipelets: ImportPipeletPayload[]
+  workflows: ImportWorkflowPayload[]
+}
+
+export interface ImportResponse {
+  created: number
+  updated: number
+}
+
 export type ApiTokenRole = 'admin' | 'readonly'
 
 export interface ApiTokenInfo {
@@ -327,6 +349,23 @@ export async function stopSimulatorTransaction(cpId: string): Promise<SimulatorS
     cp_id: cpId,
   })
   return normalizeSimulatorState(response.data)
+}
+
+export async function importConfiguration(
+  payload: ImportPayload,
+  options?: { overwrite?: boolean },
+): Promise<ImportResponse> {
+  const overwrite = Boolean(options?.overwrite)
+  const response = await apiClient.post('/api/export/import', payload, {
+    params: {
+      overwrite: overwrite ? 'true' : 'false',
+    },
+  })
+  const data = response.data as Record<string, unknown>
+  return {
+    created: Number(data.created ?? 0),
+    updated: Number(data.updated ?? 0),
+  }
 }
 
 export async function getHealthStatus(): Promise<boolean> {

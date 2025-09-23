@@ -10,6 +10,7 @@ import {
   type WorkflowGraph,
   type WorkflowSummary,
   getErrorMessage,
+  importConfiguration,
 } from './api'
 import { PipeletPalette } from './components/PipeletPalette'
 import { LogViewer } from './components/LogViewer'
@@ -20,6 +21,7 @@ import {
   type WorkflowCanvasHandle,
 } from './components/WorkflowCanvas'
 import { TokenPanel } from './components/TokenPanel'
+import { createSeedPayload } from './seed'
 
 interface StatusMessage {
   type: 'success' | 'error'
@@ -160,6 +162,44 @@ function App(): JSX.Element {
     }
   }
 
+  const handleImportSeed = async (): Promise<void> => {
+    const confirmed = window.confirm(
+      'Seed-Daten importieren? Bestehende Pipelets und Workflows werden überschrieben.',
+    )
+    if (!confirmed) {
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const payload = createSeedPayload()
+      const result = await importConfiguration(payload, { overwrite: true })
+      const workflowList = await listWorkflows()
+      setWorkflows([...workflowList].sort((a, b) => a.name.localeCompare(b.name)))
+
+      if (activeWorkflow) {
+        try {
+          const detail = await getWorkflow(activeWorkflow.id)
+          setActiveWorkflow(detail)
+          setGraph(detail.graph_json)
+          await canvasRef.current?.loadGraph(detail.graph_json)
+          setIsDirty(false)
+        } catch (error) {
+          console.error('Konnte aktiven Workflow nach Seed-Import nicht aktualisieren', error)
+        }
+      }
+
+      setStatus({
+        type: 'success',
+        text: `Seed importiert (erstellt: ${result.created}, aktualisiert: ${result.updated})`,
+      })
+    } catch (error) {
+      reportError('Seed konnte nicht importiert werden', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleCanvasChange = (updated: WorkflowGraph, reason: 'load' | 'update'): void => {
     setGraph(updated)
     setIsDirty(reason === 'update')
@@ -217,6 +257,9 @@ function App(): JSX.Element {
             disabled={isLoading || !activeWorkflow || !graph || !isDirty}
           >
             Speichern
+          </button>
+          <button type="button" onClick={handleImportSeed} disabled={isLoading}>
+            Seed importieren
           </button>
         </div>
         {status && (
