@@ -88,7 +88,6 @@ export function TokenPanel(): JSX.Element {
   }, [isCollapsed])
 
   const maskedActiveToken = maskToken(getApiToken())
-  const collapseLabel = isCollapsed ? 'Ausklappen' : 'Einklappen'
   const collapseIcon = isCollapsed ? '▼' : '▲'
   const panelContentId = 'api-token-panel-content'
 
@@ -268,7 +267,6 @@ export function TokenPanel(): JSX.Element {
             onClick={() => setIsCollapsed((value) => !value)}
           >
             <span aria-hidden="true">{collapseIcon}</span>
-            {collapseLabel}
           </button>
           <button type="button" onClick={() => void refreshTokens()} disabled={isLoading}>
             Aktualisieren
