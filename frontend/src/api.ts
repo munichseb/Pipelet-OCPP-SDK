@@ -15,6 +15,20 @@ const isBrowser = typeof window !== 'undefined'
 
 let authToken: string | null = null
 
+function normalizeBoolean(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    return ['1', 'true', 'yes', 'on'].includes(normalized)
+  }
+  if (typeof value === 'number') {
+    return value !== 0
+  }
+  return false
+}
+
 function loadInitialToken(): string | null {
   if (!isBrowser) {
     return null
@@ -133,6 +147,10 @@ export interface ApiTokenCreateResponse extends ApiTokenInfo {
   token: string
 }
 
+export interface ApiProtectionStatus {
+  enabled: boolean
+}
+
 export async function fetchPipelets(): Promise<PipeletSummary[]> {
   const response = await apiClient.get('/api/pipelets')
   return (response.data as Array<Record<string, unknown>>).map((pipelet) => ({
@@ -217,6 +235,18 @@ export async function fetchLogs(params: { source?: LogSource; limit?: number }):
   return Array.isArray(response.data)
     ? (response.data as Array<Record<string, unknown>>).map(normalizeLogEntry)
     : []
+}
+
+export async function getApiProtectionStatus(): Promise<ApiProtectionStatus> {
+  const response = await apiClient.get('/api/auth/protection')
+  const enabled = normalizeBoolean(response.data?.enabled)
+  return { enabled }
+}
+
+export async function setApiProtectionStatus(enabled: boolean): Promise<ApiProtectionStatus> {
+  const response = await apiClient.post('/api/auth/protection', { enabled })
+  const persisted = normalizeBoolean(response.data?.enabled)
+  return { enabled: persisted }
 }
 
 export async function downloadLogs(

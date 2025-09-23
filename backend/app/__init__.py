@@ -53,7 +53,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     with app.app_context():
         # Import models to ensure they are registered with SQLAlchemy before creating tables.
-        from .models import auth, logs, pipelet, workflow  # noqa: F401
+        from .models import auth, logs, pipelet, settings, workflow  # noqa: F401
 
         _initialize_database(app)
 

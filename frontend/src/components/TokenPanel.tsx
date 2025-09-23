@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import {
   createApiToken,
   getApiToken,
+  getApiProtectionStatus,
   getErrorMessage,
   listApiTokens,
   revokeApiToken,
   setApiToken,
+  setApiProtectionStatus,
   type ApiTokenInfo,
   type ApiTokenRole,
 } from '../api'
@@ -51,6 +53,8 @@ export function TokenPanel(): JSX.Element {
   const [newTokenRole, setNewTokenRole] = useState<ApiTokenRole>('readonly')
   const [modal, setModal] = useState<TokenModalState | null>(null)
   const [activeTokenInput, setActiveTokenInput] = useState(getApiToken() ?? '')
+  const [isProtectionEnabled, setIsProtectionEnabled] = useState(false)
+  const [isProtectionLoading, setIsProtectionLoading] = useState(false)
 
   const maskedActiveToken = maskToken(getApiToken())
 
@@ -74,6 +78,32 @@ export function TokenPanel(): JSX.Element {
       }
     }
     void load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let mounted = true
+    const loadProtection = async (): Promise<void> => {
+      setIsProtectionLoading(true)
+      try {
+        const status = await getApiProtectionStatus()
+        if (mounted) {
+          setIsProtectionEnabled(status.enabled)
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(getErrorMessage(err))
+        }
+      } finally {
+        if (mounted) {
+          setIsProtectionLoading(false)
+        }
+      }
+    }
+
+    void loadProtection()
     return () => {
       mounted = false
     }
@@ -137,6 +167,25 @@ export function TokenPanel(): JSX.Element {
     }
   }
 
+  const handleProtectionToggle = async (): Promise<void> => {
+    const nextValue = !isProtectionEnabled
+    setIsProtectionLoading(true)
+    try {
+      setError(null)
+      const updated = await setApiProtectionStatus(nextValue)
+      setIsProtectionEnabled(updated.enabled)
+      setStatus(
+        updated.enabled
+          ? 'API-Zugriffsschutz aktiviert'
+          : 'API-Zugriffsschutz deaktiviert',
+      )
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setIsProtectionLoading(false)
+    }
+  }
+
   const handleModalClose = (): void => {
     setModal(null)
   }
@@ -144,7 +193,30 @@ export function TokenPanel(): JSX.Element {
   return (
     <section className="token-panel" aria-label="API Token Verwaltung">
       <div className="token-panel__header">
-        <h2>API Tokens</h2>
+        <div className="token-panel__protection">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isProtectionEnabled}
+            aria-label="API Zugriffsschutz umschalten"
+            onClick={() => void handleProtectionToggle()}
+            className={`token-panel__toggle${isProtectionEnabled ? ' token-panel__toggle--on' : ''}`}
+            disabled={isProtectionLoading}
+          >
+            <span className="token-panel__toggle-thumb" aria-hidden="true" />
+          </button>
+          <div className="token-panel__protection-text">
+            <span className="token-panel__protection-label">Zugriffsschutz</span>
+            <span
+              className={`token-panel__protection-state${
+                isProtectionEnabled ? ' token-panel__protection-state--on' : ''
+              }`}
+            >
+              {isProtectionEnabled ? 'An' : 'Aus'}
+            </span>
+          </div>
+        </div>
+        <h2 className="token-panel__title">API Tokens</h2>
         <button type="button" onClick={() => void refreshTokens()} disabled={isLoading}>
           Aktualisieren
         </button>
