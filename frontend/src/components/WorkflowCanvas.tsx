@@ -9,6 +9,85 @@ import type { PipeletSummary, WorkflowGraph } from '../api'
 
 type EditorJSON = ReturnType<NodeEditor['toJSON']>
 
+type Mutable<T> = { -readonly [P in keyof T]: T[P] }
+
+function cloneGraph(graph: WorkflowGraph): EditorJSON {
+  return JSON.parse(JSON.stringify(graph)) as EditorJSON
+}
+
+function normalizeLegacyNode(node: Mutable<Record<string, unknown>>): void {
+  const data = (node.data ?? {}) as Mutable<Record<string, unknown>>
+  const pipelet = (data.pipelet ?? {}) as Record<string, unknown>
+
+  if (data.pipeletId == null) {
+    const rawId = data.pipelet_id ?? pipelet.id
+    if (typeof rawId === 'number') {
+      data.pipeletId = rawId
+    }
+  }
+
+  if (typeof data.name !== 'string' || data.name.trim() === '') {
+    const name = (typeof data.name === 'string' && data.name.trim() !== ''
+      ? data.name
+      : pipelet.name) as string | undefined
+    if (name) {
+      data.name = name
+    }
+  }
+
+  if (typeof data.event !== 'string' || data.event.trim() === '') {
+    const event = (typeof data.event === 'string' && data.event.trim() !== ''
+      ? data.event
+      : pipelet.event) as string | undefined
+    if (event) {
+      data.event = event
+    }
+  }
+
+  node.data = data
+
+  const outputs = (node.outputs ?? {}) as Mutable<Record<string, unknown>>
+  if ('out' in outputs && !('output' in outputs)) {
+    const legacyOutput = outputs.out as Mutable<Record<string, unknown>>
+    const connections = Array.isArray(legacyOutput.connections)
+      ? (legacyOutput.connections as Array<Mutable<Record<string, unknown>>>)
+      : []
+    connections.forEach((connection) => {
+      if (!('output' in connection)) {
+        connection.output = 'output'
+      }
+      if (!('input' in connection)) {
+        connection.input = 'input'
+      }
+    })
+
+    outputs.output = {
+      ...legacyOutput,
+      connections,
+    }
+    delete outputs.out
+  }
+  node.outputs = outputs
+
+  const inputs = (node.inputs ?? {}) as Mutable<Record<string, unknown>>
+  if ('in' in inputs && !('input' in inputs)) {
+    inputs.input = inputs.in
+    delete inputs.in
+  }
+  node.inputs = inputs
+}
+
+function normalizeGraph(graph: WorkflowGraph): EditorJSON {
+  const cloned = cloneGraph(graph)
+  const nodes = (cloned.nodes ?? {}) as Record<string, unknown>
+  Object.values(nodes).forEach((rawNode) => {
+    if (rawNode && typeof rawNode === 'object') {
+      normalizeLegacyNode(rawNode as Mutable<Record<string, unknown>>)
+    }
+  })
+  return cloned
+}
+
 interface WorkflowCanvasProps {
   onChange?: (graph: WorkflowGraph, reason: 'load' | 'update') => void
 }
@@ -150,7 +229,7 @@ export const WorkflowCanvas = forwardRef<WorkflowCanvasHandle, WorkflowCanvasPro
           try {
             editor.clear()
             if (graph && Object.keys(graph).length > 0) {
-              await editor.fromJSON(graph as unknown as EditorJSON)
+              await editor.fromJSON(normalizeGraph(graph))
             }
           } finally {
             suppressEventsRef.current = false
