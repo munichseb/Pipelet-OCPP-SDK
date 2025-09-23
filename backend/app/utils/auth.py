@@ -13,10 +13,59 @@ from typing import Any, TypeVar, cast
 from flask import g, jsonify, request
 
 from ..models.auth import ApiToken
+from ..models.settings import AppSetting
+from ..extensions import db
 
 TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
 _ROLE_LEVEL = {"readonly": 0, "admin": 1}
+_API_PROTECTION_SETTING_KEY = "api_auth_protection"
+
+
+def _normalize_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on"}
+    if isinstance(value, (int, float)):
+        return value != 0
+    return False
+
+
+def normalize_token_protection_value(value: object) -> bool:
+    """Normalize arbitrary payload to a boolean flag."""
+
+    return _normalize_bool(value)
+
+
+def is_token_protection_enabled() -> bool:
+    """Return whether API token protection is currently enforced."""
+
+    cached = getattr(g, "_api_protection_enabled", None)
+    if isinstance(cached, bool):
+        return cached
+
+    setting = AppSetting.query.filter_by(key=_API_PROTECTION_SETTING_KEY).first()
+    enabled = False
+    if setting is not None:
+        enabled = _normalize_bool(setting.value)
+
+    g._api_protection_enabled = enabled
+    return enabled
+
+
+def set_token_protection_enabled(enabled: bool) -> None:
+    """Persist whether API token protection should be enforced."""
+
+    setting = AppSetting.query.filter_by(key=_API_PROTECTION_SETTING_KEY).first()
+    value = "true" if enabled else "false"
+    if setting is None:
+        setting = AppSetting(key=_API_PROTECTION_SETTING_KEY, value=value)
+        db.session.add(setting)
+    else:
+        setting.value = value
+    db.session.commit()
+    g._api_protection_enabled = enabled
 
 
 def hash_token(token: str) -> str:
@@ -68,6 +117,9 @@ def require_token(role: str = "readonly") -> Callable[[TCallable], TCallable]:
     def decorator(func: TCallable) -> TCallable:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any):
+            if not is_token_protection_enabled():
+                return func(*args, **kwargs)
+
             token_value = _extract_bearer_token()
             if not token_value:
                 return _unauthorized("missing bearer token")

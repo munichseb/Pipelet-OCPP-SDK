@@ -79,10 +79,12 @@ def auth_header_factory(app):
 @pytest.fixture(autouse=True)
 def cleanup_tokens(app):
     from backend.app.models.auth import ApiToken
+    from backend.app.models.settings import AppSetting
 
     yield
 
     db.session.query(ApiToken).delete()
+    db.session.query(AppSetting).delete()
     db.session.commit()
 
 

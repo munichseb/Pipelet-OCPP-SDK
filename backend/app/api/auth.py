@@ -9,7 +9,14 @@ from flask import Blueprint, jsonify, request
 
 from ..extensions import db
 from ..models.auth import ApiToken
-from ..utils.auth import generate_token, hash_token, require_token
+from ..utils.auth import (
+    generate_token,
+    hash_token,
+    is_token_protection_enabled,
+    normalize_token_protection_value,
+    require_token,
+    set_token_protection_enabled,
+)
 
 bp = Blueprint("auth", __name__)
 
@@ -22,6 +29,23 @@ def _serialize(token: ApiToken) -> dict[str, object | None]:
         "created_at": token.created_at.isoformat() + "Z",
         "revoked_at": token.revoked_at.isoformat() + "Z" if token.revoked_at else None,
     }
+
+
+@bp.get("/auth/protection")
+def get_protection_status() -> tuple[object, int]:
+    """Return whether API access is protected by tokens."""
+
+    return jsonify({"enabled": is_token_protection_enabled()}), HTTPStatus.OK
+
+
+@bp.post("/auth/protection")
+def update_protection_status() -> tuple[object, int]:
+    """Enable or disable API token protection without requiring authentication."""
+
+    payload = request.get_json(silent=True) or {}
+    enabled = normalize_token_protection_value(payload.get("enabled", False))
+    set_token_protection_enabled(enabled)
+    return jsonify({"enabled": is_token_protection_enabled()}), HTTPStatus.OK
 
 
 @bp.post("/auth/tokens")
