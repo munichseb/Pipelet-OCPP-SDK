@@ -12,7 +12,7 @@ test: ## Backend Tests
 	docker compose exec backend pytest -q
 
 seed: ## Beispiel-Daten
-	docker compose exec backend python backend/scripts/seed.py
+	docker compose exec backend python scripts/seed.py
 
 export: ## Export JSON
 	@if [ -z "$$TOKEN" ]; then echo "Set TOKEN env var with a valid Bearer token"; exit 1; fi
