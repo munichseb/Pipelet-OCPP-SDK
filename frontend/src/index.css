@@ -681,6 +681,10 @@ select {
   gap: 1rem;
 }
 
+.token-panel__content[hidden] {
+  display: none;
+}
+
 .token-panel__protection {
   display: flex;
   align-items: center;
