@@ -144,6 +144,9 @@ const EXAMPLE_PIPELET_NAMES = [
   'HTTP Webhook',
 ]
 
+// Must match the editor identifier used in WorkflowCanvas
+const WORKFLOW_EDITOR_ID = 'pipelet-workflow@0.1.0'
+
 function buildExampleWorkflowGraph(pipelets: SeedPipelet[]): string {
   const nodes: Record<string, unknown> = {}
   pipelets.forEach((pipelet, index) => {
@@ -168,7 +171,10 @@ function buildExampleWorkflowGraph(pipelets: SeedPipelet[]): string {
           },
     }
   })
-  return JSON.stringify({ nodes })
+  return JSON.stringify({
+    id: WORKFLOW_EDITOR_ID,
+    nodes,
+  })
 }
 
 export function createSeedPayload(): SeedPayload {
