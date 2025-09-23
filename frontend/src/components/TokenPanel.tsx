@@ -44,6 +44,8 @@ function maskToken(value: string | null): string {
   return `${value.slice(0, 6)}…${value.slice(-4)}`
 }
 
+const TOKEN_PANEL_COLLAPSE_STORAGE_KEY = 'pipelet.ui.tokenPanel.collapsed'
+
 export function TokenPanel(): JSX.Element {
   const [tokens, setTokens] = useState<ApiTokenInfo[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -56,6 +58,34 @@ export function TokenPanel(): JSX.Element {
   const [isProtectionEnabled, setIsProtectionEnabled] = useState(false)
   const [isProtectionLoading, setIsProtectionLoading] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(true)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    try {
+      const stored = window.localStorage.getItem(TOKEN_PANEL_COLLAPSE_STORAGE_KEY)
+      if (stored !== null) {
+        setIsCollapsed(stored !== 'false')
+      }
+    } catch (err) {
+      console.warn('Konnte Token-Panel-Zustand nicht laden', err)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    try {
+      window.localStorage.setItem(
+        TOKEN_PANEL_COLLAPSE_STORAGE_KEY,
+        isCollapsed ? 'true' : 'false',
+      )
+    } catch (err) {
+      console.warn('Konnte Token-Panel-Zustand nicht speichern', err)
+    }
+  }, [isCollapsed])
 
   const maskedActiveToken = maskToken(getApiToken())
   const collapseLabel = isCollapsed ? 'Ausklappen' : 'Einklappen'
@@ -230,6 +260,11 @@ export function TokenPanel(): JSX.Element {
             className="token-panel__collapse-button"
             aria-expanded={!isCollapsed}
             aria-controls={panelContentId}
+            aria-label={
+              isCollapsed
+                ? 'API Tokens anzeigen'
+                : 'API Tokens verbergen'
+            }
             onClick={() => setIsCollapsed((value) => !value)}
           >
             <span aria-hidden="true">{collapseIcon}</span>
