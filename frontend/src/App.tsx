@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios'
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
   createWorkflow,
@@ -8,6 +9,7 @@ import {
   type WorkflowDetail,
   type WorkflowGraph,
   type WorkflowSummary,
+  getErrorMessage,
 } from './api'
 import { PipeletPalette } from './components/PipeletPalette'
 import { LogViewer } from './components/LogViewer'
@@ -56,7 +58,21 @@ function App(): JSX.Element {
 
   const reportError = (message: string, error: unknown): void => {
     console.error(message, error)
-    setStatus({ type: 'error', text: message })
+
+    let detail: string | null = null
+    if (isAxiosError(error) && error.response?.status === 401) {
+      detail = 'Zugriff verweigert. Bitte gültiges API-Token im Bereich „API Tokens“ speichern.'
+    } else {
+      const extracted = getErrorMessage(error)
+      if (extracted && extracted !== 'Unbekannter Fehler') {
+        detail = extracted
+      }
+    }
+
+    setStatus({
+      type: 'error',
+      text: detail ? `${message}: ${detail}` : message,
+    })
   }
 
   const handleSimulatorActionComplete = (): void => {

@@ -303,7 +303,7 @@ export async function getHealthStatus(): Promise<boolean> {
   try {
     const response = await apiClient.get('/api/health')
     return response.status === 200
-  } catch (error) {
+  } catch {
     return false
   }
 }
