@@ -1,6 +1,9 @@
+version: "3.9"
+
 services:
   db:
     image: mysql:8.0
+    hostname: db
     environment:
       MYSQL_DATABASE: pipelet_sandbox
       MYSQL_USER: app
@@ -24,7 +27,8 @@ services:
       FLASK_ENV: development
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "9200:9200"   # Flask API
       - "9000:9000"   # OCPP WS (später genutzt)
