@@ -276,6 +276,13 @@ select {
   stroke: rgba(248, 250, 252, 0.95);
 }
 
+.pipelet-node__title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f8fafc;
+  text-align: center;
+}
+
 .pipelet-node__event {
   margin-top: 0.5rem;
   padding: 0.35rem 0.5rem;
@@ -622,6 +629,10 @@ select {
   margin-bottom: 1.5rem;
 }
 
+.token-panel--collapsed {
+  gap: 0.75rem;
+}
+
 .token-panel__header {
   display: flex;
   align-items: center;
@@ -632,6 +643,42 @@ select {
 
 .token-panel__title {
   margin: 0;
+}
+
+.token-panel__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.token-panel__collapse-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #e2e8f0;
+  color: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  padding: 0.4rem 0.75rem;
+}
+
+.token-panel__collapse-button span {
+  font-size: 0.8rem;
+}
+
+.token-panel__collapse-button:hover:not(:disabled) {
+  background: #cbd5f5;
+  box-shadow: none;
+}
+
+.token-panel__collapse-button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.token-panel__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .token-panel__protection {

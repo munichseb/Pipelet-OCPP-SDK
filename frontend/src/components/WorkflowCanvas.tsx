@@ -21,6 +21,10 @@ function normalizeLegacyNode(node: Mutable<Record<string, unknown>>): void {
   const data = (node.data ?? {}) as Mutable<Record<string, unknown>>
   const pipelet = (data.pipelet ?? {}) as Record<string, unknown>
 
+  if (typeof node.name !== 'string' || node.name.trim() === '' || node.name !== 'Pipelet') {
+    node.name = 'Pipelet'
+  }
+
   if (data.pipeletId == null) {
     const rawId = data.pipelet_id ?? pipelet.id
     if (typeof rawId === 'number') {
@@ -47,6 +51,21 @@ function normalizeLegacyNode(node: Mutable<Record<string, unknown>>): void {
   }
 
   node.data = data
+
+  const meta =
+    node.meta && typeof node.meta === 'object' && !Array.isArray(node.meta)
+      ? (node.meta as Mutable<Record<string, unknown>>)
+      : ({} as Mutable<Record<string, unknown>>)
+  if (typeof data.pipeletId === 'number') {
+    meta.pipeletId = data.pipeletId
+  }
+  if (typeof data.name === 'string' && data.name.trim() !== '') {
+    meta.displayName = data.name
+  }
+  if (typeof data.event === 'string') {
+    meta.event = data.event
+  }
+  node.meta = meta
 
   const outputs = (node.outputs ?? {}) as Mutable<Record<string, unknown>>
   if ('out' in outputs && !('output' in outputs)) {
@@ -119,6 +138,22 @@ interface PipeletNodeData {
   event: string
 }
 
+class PipeletTitleControl extends Control {
+  constructor(name: string) {
+    super('pipelet-title')
+    const control = this as unknown as Control & {
+      render: string
+      component: (props: { name?: string }) => JSX.Element
+      props: { name: string }
+    }
+    control.render = 'react'
+    control.component = ({ name: pipeletName }) => (
+      <div className="pipelet-node__title">{pipeletName || 'Pipelet'}</div>
+    )
+    control.props = { name }
+  }
+}
+
 class PipeletInfoControl extends Control {
   constructor(event: string) {
     super('pipelet-info')
@@ -144,11 +179,15 @@ class PipeletComponent extends Rete.Component {
 
   async builder(node: ReteNode): Promise<void> {
     const data = node.data as unknown as PipeletNodeData
-    node.name = data.name || 'Pipelet'
+    const displayName = data.name || 'Pipelet'
+    node.name = 'Pipelet'
     node.meta = node.meta || {}
     node.meta.pipeletId = data.pipeletId
+    node.meta.displayName = displayName
+    node.meta.event = data.event
     node.addInput(new Input('input', 'Input', pipeletSocket, true))
     node.addOutput(new Output('output', 'Output', pipeletSocket))
+    node.addControl(new PipeletTitleControl(displayName))
     node.addControl(new PipeletInfoControl(data.event))
   }
 
