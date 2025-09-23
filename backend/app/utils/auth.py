@@ -12,9 +12,9 @@ from typing import Any, TypeVar, cast
 
 from flask import g, jsonify, request
 
+from ..extensions import db
 from ..models.auth import ApiToken
 from ..models.settings import AppSetting
-from ..extensions import db
 
 TCallable = TypeVar("TCallable", bound=Callable[..., Any])
 
@@ -27,7 +27,7 @@ def _normalize_bool(value: object) -> bool:
         return value
     if isinstance(value, str):
         return value.strip().lower() in {"1", "true", "yes", "on"}
-    if isinstance(value, (int, float)):
+    if isinstance(value, int | float):
         return value != 0
     return False
 
