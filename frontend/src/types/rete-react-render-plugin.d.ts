@@ -3,16 +3,16 @@ declare module 'rete-react-render-plugin' {
   import type { Plugin } from 'rete'
 
   export interface ReactRenderPluginOptions {
-    component?: ComponentType<any>
+    component?: ComponentType<Record<string, unknown>>
     createRoot?: (container: HTMLElement) => {
       render: (element: ReactElement) => void
       unmount: () => void
     }
   }
 
-  export const Node: ComponentType<any>
-  export const Socket: ComponentType<any>
-  export const Control: ComponentType<any>
+  export const Node: ComponentType<Record<string, unknown>>
+  export const Socket: ComponentType<Record<string, unknown>>
+  export const Control: ComponentType<Record<string, unknown>>
 
   const ReactRenderPlugin: Plugin & {
     name: string
